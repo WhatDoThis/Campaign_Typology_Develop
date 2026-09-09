@@ -2,6 +2,7 @@
 
 ## Log Index
 
+42. 2026-09-09 GitHub 초기 push — Campaign_Typology_Develop
 41. 2026-09-09 acc-reference-index PrepareMessage·postTarget·count delta
 40. 2026-09-09 postTarget ensureDeliveryPrepareMessageForTypology — WF js6 대체
 39. 2026-09-09 lguTestRunDeliveryPrepareMessage — STG 제외·load fix
@@ -45,6 +46,18 @@
 1. 2026-09-08 Ver.2 LGU_TARGET_TYPE_M_NO 필드 통일 및 배포 문서
 
 ## Log Body
+
+42. 2026-09-09 GitHub 초기 push — Campaign_Typology_Develop
+
+Purpose: 프로젝트 전용 git 저장소 생성 후 GitHub 원격 main 반영
+
+Changes:
+
+- 프로젝트 루트 git init (main), .gitignore 추가
+- Initial commit 70 files → origin main push
+- .cursor/rules/git-push-merge.mdc — "깃 올려줘" 자동 push/merge 규칙
+
+Changed files: .gitignore, .cursor/rules/git-push-merge.mdc, docs/log/log.md
 
 41. 2026-09-09 acc-reference-index PrepareMessage·postTarget·count delta
 
