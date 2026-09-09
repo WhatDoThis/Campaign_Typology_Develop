@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+lgu.LGU_TARGET_TYPE_FATIGUE_M ([LGU] 타겟유형 피로도 Input form)
+================================================================
+타겟유형 마스터 NO·유형내용 + cap 설정. Save 시 Pressure Rule 자동 sync.
+
+[Main Functions]
+===========
+- LGU_TARGET_TYPE_FATIGUE_M_inputForm: notebook UI
+- syncFatigueFromForm: postSave hook
+
+[Dependencies]
+=========
+- lgu:LGU_TARGET_TYPE_FATIGUE_M, lgu:LGU_TARGET_TYPE_M
+- lgu:lguFatigueRuleSync
+-->
+<form entity-schema="lgu:LGU_TARGET_TYPE_FATIGUE_M" label="[LGU] 타겟유형 피로도"
+      maxLabelWidth="120" name="LGU_TARGET_TYPE_FATIGUE_M" namespace="lgu"
+      xtkschema="xtk:form">
+
+  <container style="flat" type="notebook">
+
+    <container label="피로도 설정">
+      <static label="타겟유형·채널별 발송 상한. 저장(Finish) 시 Typology Pressure Rule에 자동 반영됩니다."
+             type="help"/>
+      <container colcount="2">
+        <input colspan="2" label="표시 이름" xpath="@label"/>
+        <input hidden="true" xpath="@LGU_TARGET_TYPE_M_NO"/>
+        <input label="유형내용" readOnly="true" xpath="@TYPE_DETAIL"/>
+        <input colspan="2" label="타겟유형 선택" prebuildSubForm="false" type="subFormLink" xpath=".">
+          <form label="타겟유형" nothingToSave="true" xpath=".">
+            <input choiceButton="true" extraColumns="[.],@NO,@TYPE_DETAIL" monoSelection="true"
+                   schema="lgu:LGU_TARGET_TYPE_M" type="linkListChoice" xpath="."
+                   xpathOut="/ignored/LGU_TARGET_TYPE_M">
+              <input label="유형번호" xpath="@NO"/>
+              <input label="유형내용" xpath="@TYPE_DETAIL"/>
+              <orderBy>
+                <node expr="@NO" sortDesc="false"/>
+              </orderBy>
+            </input>
+            <leave>
+              <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@NO]"
+                   xpath="@LGU_TARGET_TYPE_M_NO"/>
+              <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@TYPE_DETAIL]"
+                   xpath="@TYPE_DETAIL"/>
+            </leave>
+          </form>
+        </input>
+        <static colspan="2"
+               label="유형마스터번호 0 = 채널 TOTAL (Pressure Rule filter 없음). 마스터와 스키마 FK 없음."
+               type="help"/>
+        <container readOnlyExpr="@managedBySync=true">
+          <input label="채널" xpath="@messageType"/>
+        </container>
+        <input label="사용" xpath="@active"/>
+        <input label="허용 건수" xpath="@capCount"/>
+        <input label="집계 기간(일)" xpath="@periodDays"/>
+        <input label="실행 순서" xpath="@executionOrder"/>
+      </container>
+    </container>
+
+    <container label="연동 상태">
+      <static label="migrate·sync가 채우는 필드. Sync 관리 대상이면 Rule/Typology 이름은 읽기 전용."
+             type="help"/>
+      <container colcount="1">
+        <container readOnlyExpr="@managedBySync=true">
+          <input label="Rule 이름" xpath="@ruleInternalName"/>
+          <input label="Typology" xpath="@typologyInternalName"/>
+        </container>
+        <input label="Sync 관리" readOnly="true" xpath="@managedBySync"/>
+        <input label="마지막 sync" readOnly="true" xpath="@lastSyncAt"/>
+        <input label="sync 결과" lineCount="3" readOnly="true" type="memo" xpath="@lastSyncStatus"/>
+      </container>
+    </container>
+
+  </container>
+
+  <postSave>
+    <soapCall name="Execute" service="xtk:javascript">
+      <param exprIn="'loadLibrary(\'lgu:lguFatigueRuleSync\'); syncFatigueFromForm('+@id+');'"
+             type="string"/>
+    </soapCall>
+  </postSave>
+
+</form>

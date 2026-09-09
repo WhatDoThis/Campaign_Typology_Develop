@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+lgu.typologyRule (Typology Rule 채널 enum — lgu:delivery 연동)
+==============================================================
+nms:typologyRule 확장. messageType enum template을 lgu:delivery:messageType으로 재지정.
+Delivery에 추가한 커스텀 채널(lguMMS=101)이 Pressure Rule Channel 셀렉트에 표시되도록 함.
+
+[Main Functions]
+===========
+- messageType template: lgu:delivery:messageType (nms OOTB + lguMMS)
+
+[Endpoints/Classes/Functions]
+=======================
+- enumeration messageType: template override only
+
+[Dependencies]
+=========
+- nms:typologyRule (extendedSchema)
+- lgu:delivery:messageType (template source — lguMMS=101)
+-->
+<srcSchema _cs="Typology rules (lgu)" created="2026-09-08 02:11:06.486Z" createdBy-id="0"
+           desc="Rules applying to delivery actions based on typologies" entitySchema="xtk:srcSchema"
+           extendedSchema="nms:typologyRule" img="nms:typorule.png" label="Typology rules"
+           labelSingular="Typology rule" lastModified="2026-09-08 11:20:00.000Z"
+           mappingType="sql" md5="001F44D975E590B5306C5EA68DC8AE5D" modifiedBy-id="0"
+           name="typologyRule" namespace="lgu" xtkschema="xtk:srcSchema">
+  <createdBy _cs="우해인 (hiwoo)"/>
+  <modifiedBy _cs="우해인 (hiwoo)"/>
+
+  <!-- nms:typologyRule은 template="nms:delivery:messageType" — lgu 채널은 여기서 재지정 필요 -->
+  <enumeration name="messageType" template="lgu:delivery:messageType"/>
+
+  <element desc="Rules applying to delivery actions based on typologies" img="nms:typorule.png"
+           label="Typology rules" labelSingular="Typology rule" name="typologyRule"/>
+</srcSchema>

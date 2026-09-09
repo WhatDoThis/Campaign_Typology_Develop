@@ -1,0 +1,378 @@
+<form entitySchema="xtk:form" img="xtk:form.png" label="Typology rule" maxLabelWidth="50"
+      md5="5C58E49F37A112D3EF3646757E8FB3EC" name="typologyRule" namespace="nms"
+      xpathsToLoad="where/*,where/condition/*,contextFilter/*,         contextFilter/where/*,contextFilter/where/condition/*"
+      xpathsToLoadOpt="businessRanking/deliveryFilter/*,         businessRanking/deliveryFilter/where/*,         businessRanking/deliveryFilter/where/condition/*,         propositionConsistency/propositionFilter/*,         propositionConsistency/propositionFilter/where/*,         propositionConsistency/propositionFilter/where/condition/*"
+      xtkschema="xtk:form">
+  <enter>
+    <set value="nms:delivery" xpath="/ignored/@deliverySchema"/>
+    <if expr="HasPackage('nms:campaignOptimization')">
+      <set expr="[businessRanking/@thresholdLink]!=''" xpath="/tmp/@useGrouping"/>
+    </if>
+    <set value="1" xpath="/ignored/@currentDeliveryId"/>
+  </enter>
+
+<!--[of]:Lib-->
+  <container name="lib" type="visibleGroup" visibleIf="false">
+    <container name="previewSQL">
+      <form label="Native SQL query generated from the filter" name="form" nothingToEdit="true"
+            nothingToSave="true">
+        <enter>
+          <soapCall name="BuildQuery" service="xtk:queryDef">
+            <param exprIn="." type="DOMElement"/>
+            <param type="string" xpathOut="/tmp/@previewSQL"/>
+          </soapCall>
+        </enter>
+
+        <static label="Native SQL query generated to populate the list." type="help"/>
+        <input contentType="sql" nolabel="true" readOnly="true" type="codeEdit" wrap="true"
+               xpath="/tmp/@previewSQL"/>
+      </form>
+    </container>
+
+    <container name="recipientFilter">
+      <input img="nms:recipient.png" label="Edit the query from the targeting dimension..."
+             nolabel="false" prebuildSubForm="false" type="subFormLink" xpath=".">
+        <form label="Edit filtering query" nothingToSave="true" type="wizard">
+          <enter>
+            <set value="1" xpath="/ignored/@currentFilterStack"/>
+            <set value="0" xpath="/ignored/@addFilter"/>
+            <set value="" xpath="/ignored/@filterName"/>
+          </enter>
+
+          <container colcount="2" desc="Select the type of the target element" firstActivatedIf="count(where) == 0"
+                     img="nms:pictoprofile.png" name="typePage" title="Target type">
+            <static colspan="2" label="List of restriction filters" type="separator"/>
+            <input colspan="2" dblClickAction="wizNext" img="xtk:filter.png" noEditCollection="true"
+                   noToolbar="true" nolabel="true" type="filterList" xpath="/tmp/filterList"
+                   xpathFilter="/ignored/@filterName" xpathSchema="@schema" xpathWhere="where"/>
+          </container>
+          <container desc="Please enter the definition of the target element" enabledButtonLabelIf="[/ignored/@currentFilterStack] == true"
+                     img="nms:pictoprofile.png" name="targetPage" nextButtonLabel="Refine the target&gt;"
+                     nextPage="typePage" title="Target element">
+            <container name="targetPageFocus" style="flat" type="notebook">
+              <container label="Criteria">
+                <input xpath="@label"/>
+                <static label="Filter settings" type="separator"/>
+                <input propagateXPathToCtx="/ignored/@currentDeliveryId|/@currentDeliveryId,/ignored/@currentOfferId|/@currentOfferId"
+                       type="filterView" xpath="." xpathFilter="/ignored/@filterName"
+                       xpathLabel="@label" xpathQueryLabel="humanCond" xpathSchema="@schema"/>
+              </container>
+              <container label="Preview">
+                <input hideEditButtons="true" name="targetPreviewQuery" noToolbar="true"
+                       nolabel="true" type="filterPreviewList" xpath="/ignored/previewList"
+                       xpathSchema="@schema" xpathTargetPart="."/>
+              </container>
+            </container>
+            <leave>
+              <set value="1" xpath="/ignored/@addFilter"/>
+              <set value="" xpath="/ignored/@filterName"/>
+            </leave>
+          </container>
+        </form>
+      </input>
+      <container type="visibleGroup" visibleIf="humanCond!=''">
+        <input fontBold="true" label=" " noBorder="true" readOnly="true" type="memo"
+               xpath="humanCond"/>
+      </container>
+    </container>
+
+    <container name="deliveryFilter">
+      <input img="nms:delivery.png" label="Limit the deliveries..." nolabel="true"
+             prebuildSubForm="false" type="subFormLink" xpath="deliveryFilter">
+        <form label="Query" nothingToSave="true" xpath=".">
+          <input name="deliveryFilter" nolabel="true" propagateXPathToCtx="/ignored/@currentDeliveryId|/@currentDeliveryId"
+                 schema="nms:delivery" toolbarAlign="horizontal" toolbarCaption="Filter conditions"
+                 type="conditionlist" xpath="where" xpathCurrentLookupPath="/ignored/delivery/lookupPath"
+                 xpathHelp="/ignored/delivery/humanCond">
+            <input colSize="15" label=" " xpath="/ignored/delivery/@bool-operator"/>
+            <input colSize="30" label="Expression" xpath="/ignored/delivery/@leftExpr"/>
+            <input colSize="15" label="Operator" xpath="/ignored/delivery/@operator"/>
+            <input colSize="30" label="Value" xpath="/ignored/delivery/@rightExpr"/>
+          </input>
+          <input fontBold="true" lineCount="4" noBorder="true" nolabel="true" readOnly="true"
+                 type="edit" xpath="/ignored/delivery/humanCond"/>
+          <input checkModify="true" label="Generated SQL query..." type="subFormLink">
+            <enter name="onClick">
+              <set value="nms:delivery" xpath="@schema"/>
+            </enter>
+            <form label="Native SQL query generated from the filter" ref="nms:typologyRule:lib/previewSQL/form"
+                  xpath="."/>
+          </input>
+          <leave>
+            <set expr="[/ignored/delivery/humanCond]" xpath="humanCond"/>
+          </leave>
+        </form>
+      </input>
+      <container type="visibleGroup" visibleIf="[deliveryFilter/humanCond]!=''">
+        <input fontBold="true" label=" " noBorder="true" readOnly="true" type="memo"
+               xpath="deliveryFilter/humanCond"/>
+      </container>
+    </container>
+
+    <container name="propositionFilter">
+      <input img="nms:offer.png" label="Limit propositions..." nolabel="true" prebuildSubForm="false"
+             type="subFormLink" xpath="propositionFilter">
+        <form label="Query" nothingToSave="true" xpath=".">
+          <input name="propositionFilter" nolabel="true" propagateXPathToCtx="/ignored/@currentOfferId|/@currentOfferId"
+                 toolbarAlign="horizontal" toolbarCaption="Filter conditions" type="conditionlist"
+                 xpath="where" xpathCurrentLookupPath="/ignored/offer/lookupPath"
+                 xpathHelp="/ignored/offer/humanCond" xpathSchema="../../@propositionSchema">
+            <input colSize="15" label=" " xpath="/ignored/offer/@bool-operator"/>
+            <input colSize="30" label="Expression" xpath="/ignored/offer/@leftExpr"/>
+            <input colSize="15" label="Operator" xpath="/ignored/offer/@operator"/>
+            <input colSize="30" label="Value" xpath="/ignored/offer/@rightExpr"/>
+          </input>
+          <input fontBold="true" lineCount="4" noBorder="true" nolabel="true" readOnly="true"
+                 type="edit" xpath="/ignored/offer/humanCond"/>
+          <input checkModify="true" label="Generated SQL query..." type="subFormLink">
+            <enter name="onClick">
+              <set expr="[../../@propositionSchema]" xpath="@schema"/>
+            </enter>
+            <form label="Native SQL query generated from the filter" ref="nms:typologyRule:lib/previewSQL/form"
+                  xpath="."/>
+          </input>
+          <leave>
+            <set expr="[/ignored/offer/humanCond]" xpath="humanCond"/>
+          </leave>
+        </form>
+      </input>
+      <container type="visibleGroup" visibleIf="[propositionFilter/humanCond]!=''">
+        <input fontBold="true" label=" " noBorder="true" readOnly="true" type="memo"
+               xpath="propositionFilter/humanCond"/>
+      </container>
+    </container>
+  </container>
+<!--[cf]-->
+
+  <container type="iconbox">
+    <container colcount="2" img="xtk:properties.png" label="General">
+      <input xpath="@label"/>
+      <input xpath="@name"/>
+      <input xpath="@ruleType"/>
+      <input xpath="@messageType"/>
+      <container colcount="2" colspan="2" type="visibleGroup" visibleIf="@ruleType == 'javascript'">
+        <input xpath="@ruleStep"/>
+        <input xpath="@level"/>
+      </container>
+      <container colcount="2" colspan="2" type="visibleGroup" visibleIf="@ruleType == 'volume' or @ruleType == 'propositionConsistency'">
+        <input colspan="2" xpath="@active"/>
+      </container>
+      <container colcount="2" colspan="2" type="visibleGroup" visibleIf="@ruleType != 'volume' and @ruleType != 'propositionConsistency'">
+        <input xpath="@order"/>
+        <input xpath="@active"/>
+      </container>
+
+      <container colspan="2" type="visibleGroup" visibleIf="@ruleType != 'javascript'"
+                 xpath="contextFilter">
+        <container type="visibleGroup" visibleIf="[../@ruleType] != 'propositionConsistency'">
+          <container label="Calculation parameters" type="frame">
+            <input xpath="../@forceOnPrepareMessage"/>
+            <input xpath="../@validity"/>
+            <container type="visibleGroup" visibleIf="[../@validity]&gt;0 and [../@validity]&lt;43200">
+              <static type="warning">Re-arbitration is executed automaticaly during the night: enter a minimum value of 12h.</static>
+            </container>
+            <static type="help">Enter the maximum period during which targeting can be saved, once the delivery target has been estimated. Once this period is up, all rules are re-applied, either during daily re-arbitration or during personalization. The value 0 indicates that the validity of the rule is permanent.</static>
+          </container>
+        </container>
+        <static label="Application conditions" type="separator"/>
+
+        <container type="visibleGroup" visibleIf="[../@ruleType]=='sql'">
+          <input checkedValue="0" label="All deliveries and outlines" type="radioButton"
+                 xpath="@contextType"/>
+          <input checkedValue="2" label="Depending on the delivery" type="radioButton"
+                 xpath="@contextType"/>
+          <input applicableIf="HasPackage('nms:campaign')" checkedValue="1" label="Depending on the outline"
+                 type="radioButton" xpath="@contextType"/>
+        </container>
+        <container type="visibleGroup" visibleIf="EV(@contextType, 'all')=false OR [../@ruleType]!='sql'">
+          <input colspan="2" img="nms:miniatures/mini-query.png" label="Edit the rule application conditions..."
+                 nolabel="true" prebuildSubForm="false" type="subFormLink" xpath=".">
+            <form label="Query" nothingToSave="true" xpath=".">
+              <enter>
+                <if expr="[../@ruleType]!='sql'">
+                  <set value="2" xpath="@contextType"/>
+                </if>
+                <set expr="Iif([../@ruleType]='propositionConsistency', 'nms:offer', Iif(EV(@contextType,'delivery'), 'nms:delivery', 'nms:deliveryOutline'))"
+                     xpath="/ignored/@conditionSchema"/>
+              </enter>
+              <input name="contextFilter" nolabel="true" propagateXPathToCtx="/ignored/@currentOfferId|/@currentOfferId"
+                     toolbarAlign="horizontal" toolbarCaption="Filter conditions"
+                     type="conditionlist" xpath="where" xpathCurrentLookupPath="/ignored/context/lookupPath"
+                     xpathHelp="/ignored/context/humanCond" xpathSchema="/ignored/@conditionSchema">
+                <input colSize="15" label=" " xpath="/ignored/context/@bool-operator"/>
+                <input colSize="30" label="Expression" xpath="/ignored/context/@leftExpr"/>
+                <input colSize="15" label="Operator" xpath="/ignored/context/@operator"/>
+                <input colSize="30" label="Value" xpath="/ignored/context/@rightExpr"/>
+              </input>
+              <input fontBold="true" lineCount="3" noBorder="true" nolabel="true"
+                     readOnly="true" type="edit" xpath="/ignored/context/humanCond"/>
+              <input checkModify="true" label="Generated SQL query..." type="subFormLink">
+                <enter name="onClick">
+                  <set expr="[/ignored/@conditionSchema]" xpath="@schema"/>
+                </enter>
+                <form label="Native SQL query generated from the filter" ref="nms:typologyRule:lib/previewSQL/form"
+                      xpath="contextFilter"/>
+              </input>
+              <leave>
+                <set expr="[/ignored/context/humanCond]" xpath="humanCond"/>
+              </leave>
+            </form>
+          </input>
+          <container type="visibleGroup" visibleIf="NodeCount([where/condition])&gt;0">
+            <input colspan="2" fontBold="true" label=" " lineCount="4" noBorder="true"
+                   readOnly="true" type="memo" xpath="humanCond"/>
+          </container>
+        </container>
+      </container>
+
+      <static colspan="2" label="Description" type="separator"/>
+      <input colspan="2" nolabel="true" xpath="desc"/>
+    </container>
+
+    <container applicableIf="HasPackage('nms:campaignOptimization')" colcount="2"
+               img="nms:businessRanking.png" label="Pressure" visibleIf="@ruleType == 'businessRanking'"
+               xpath="businessRanking">
+      <input colspan="2" schema="xtk:schema" type="schemaEdit" xpath="../@schema"/>
+      <container colcount="2" colspan="2" label="Sliding period" type="frame">
+        <input xpath="@periodRanking"/>
+        <input xpath="@boxingUnit"/>
+        <input colspan="2" useDesc="true" xpath="@activeForecast"/>
+      </container>
+      <container colcount="2" colspan="2" label="Maximum number of messages" type="frame">
+        <input xpath="@thresholdType"/>
+        <container type="visibleGroup" visibleIf="EV(@thresholdType, 'constant')">
+          <input label="Quantity" width="7" xpath="@threshold"/>
+        </container>
+        <container colspan="2" type="visibleGroup" visibleIf="EV(@thresholdType, 'constant') and @threshold=0">
+          <static type="warning">Warning: a threshold of zero blocks all messages for the affected period.</static>
+        </container>
+        <container type="visibleGroup" visibleIf="EV(@thresholdType, 'formula')">
+          <input label="Formula" nolabel="false" propagateXPathToCtx="/ignored/@currentDeliveryId|/@currentDeliveryId"
+                 type="pathEdit" xpath="thresholdFormula" xpathSchema="../@schema"/>
+        </container>
+        <input colspan="2" label="Count messages on a linked dimension" type="checkBox"
+               xpath="/tmp/@useGrouping"/>
+        <container colspan="2" type="visibleGroup" visibleIf="[/tmp/@useGrouping]">
+          <input label="Count link" nolabel="false" type="pathEdit" useLink11Path="true"
+                 xpath="@thresholdLink" xpathSchema="../@schema"/>
+        </container>
+      </container>
+      <container colspan="2" label="Default formula for computing delivery weight"
+                 type="frame">
+        <input label="Weight formula" nolabel="false" propagateXPathToCtx="/ignored/@currentDeliveryId|/@currentDeliveryId"
+               type="pathEdit" xpath="weightFormula" xpathSchema="../@schema"/>
+      </container>
+      <static colspan="2" label="Messages to count" type="separator"/>
+      <container colspan="2" ref="nms:typologyRule:lib/recipientFilter" xpath=".."/>
+      <container colspan="2" ref="nms:typologyRule:lib/deliveryFilter" xpath="."/>
+    </container>
+
+    <container applicableIf="HasPackage('nms:interaction')" img="nms:offer.png" label="Offer presentation"
+               visibleIf="@ruleType == 'propositionConsistency'" xpath="propositionConsistency">
+      <input schema="xtk:schema" type="schemaEdit" xpath="../@schema"/>
+      <input required="true" schema="xtk:schema" type="schemaEdit" xpath="../@propositionSchema"/>
+      <container label="Sliding period" type="frame">
+        <input xpath="@period"/>
+      </container>
+      <container label="Maximum number of propositions" type="frame">
+        <input label="Quantity" width="7" xpath="@threshold"/>
+      </container>
+      <static label="Propositions to count" type="separator"/>
+      <input xpath="@sameChannel"/>
+      <input xpath="@offerSet"/>
+      <input xpath="@status"/>
+      <container ref="nms:typologyRule:lib/recipientFilter" xpath=".."/>
+      <container ref="nms:typologyRule:lib/propositionFilter" xpath="."/>
+    </container>
+
+    <container img="xtk:javascript.png" label="Code" visibleIf="@ruleType == 'javascript'">
+      <input nolabel="true" toolbar="true" type="jstEdit" xpath="code"/>
+    </container>
+
+    <container applicableIf="HasPackage('nms:campaignOptimization')" img="nms:periodVolume.png"
+               label="Capacity" visibleIf="@ruleType == 'volume'">
+      <input nolabel="true" xpath="volume/@preventOverConsumption"/>
+      <input nolabel="true" xpath="volume/@noMaxSpeed"/>
+      <container type="visibleGroup" visibleIf="[volume/@preventOverConsumption]">
+        <static type="help">For each delivery, enter the formula for specifying which messages need to be saved in case of surplus.</static>
+      </container>
+      <container type="visibleGroup" visibleIf="[volume/@preventOverConsumption]=false">
+        <static type="help">Consumption lines will be generated for the extra volume. Availability lines below are just an approximation.</static>
+      </container>
+      <container applicableIf="HasPackage('nms:centralLocal')" type="visibleGroup"
+                 visibleIf="@messageType==5 or EV(@messageType, 'phone')">
+        <container label="Distribution settings for organizational entities." type="frame">
+          <input nolabel="true" xpath="volume/@useSubChannels"/>
+          <container enabledIf="[volume/@useSubChannels]" type="enabledGroup">
+            <input schema="xtk:schema" type="schemaEdit" xpath="@schema"/>
+            <input label="Formula" nolabel="false" type="pathEdit" xpath="volume/channelFormula"
+                   xpathSchema="@schema"/>
+          </container>
+        </container>
+      </container>
+      <input editable="false" form="nms:volumeLineConsumption" formOnAdd="nms:volumeLineScheduler"
+             img="nms:periodVolume.png" nolabel="true" toolbarCaption="Availability lines"
+             type="linklist" xpath="volumeLine" zoom="true" zoomOnAdd="true">
+        <input editable="true" xpath="@start"/>
+        <input editable="true" xpath="@end"/>
+        <input editable="true" xpath="@initial"/>
+        <input editable="true" xpath="@consumed"/>
+        <input hidden="true" xpath="@id"/>
+        <input xpath="@remaining"/>
+        <orderBy>
+          <node expr="@start"/>
+        </orderBy>
+      </input>
+    </container>
+
+    <container applicableIf="HasPackage('nms:campaignOptimization')" img="nms:miniatures/mini-delivery.png"
+               label="Consumptions" visibleIf="@ruleType == 'volume'">
+      <input form="nms:volumeLineConsumption" hideEditButtons="true" img="nms:miniatures/mini-delivery.png"
+             name="consumed" nolabel="true" refresh="true" toolbarCaption="Consumption lines"
+             type="linklist" xpath="volumeConsumed" xpathEditTarget="volumeLine"
+             zoom="true">
+        <input xpath="@date"/>
+        <input xpath="delivery"/>
+        <input xpath="@consumed"/>
+        <input hidden="true" xpath="@volumeLine-id"/>
+        <orderBy>
+          <node expr="@date" sortDesc="true"/>
+        </orderBy>
+      </input>
+    </container>
+
+    <container img="xtk:filter.png" label="Filter" visibleIf="@ruleType == 'sql'">
+      <input schema="xtk:schema" type="schemaEdit" xpath="@schema"/>
+      <static label="Messages to exclude" type="separator"/>
+      <container ref="nms:typologyRule:lib/recipientFilter" xpath="."/>
+    </container>
+
+    <container img="nms:typofolder.png" label="Typologies">
+      <input choicePath="/tmp/choiceList" img="nms:typofolder.png" keyName="id" labelFormChoice="Add typologies"
+             newEntityFormChoice="true" nolabel="true" promptDeleteLabel="Do you want to remove the rule from the selected typologies?"
+             selectionPath="/tmp/entityList" toolbarCaption="Typologies applying the rule"
+             type="linkList" xpath="typologies" xpathChoiceTarget="typology" xpathEditTarget="typology"
+             zoom="true">
+        <input xpath="typology/@label"/>
+        <input xpath="typology/desc"/>
+      </input>
+    </container>
+
+    <container applicableIf="HasPackage('nms:centralLocal')" img="nms:packages/mini-centralLocal.png"
+               label="Distributed marketing" visibleIf="@ruleType != 'propositionConsistency'">
+      <container colspan="2" label="Typology rule remapping when copied from central to local level"
+                 type="frame">
+        <input createMode="none" noZoom="true" xpath="localOrgUnit"/>
+        <input createMode="none" xpath="centralTypologyRule">
+          <sysFilter>
+            <condition expr="@id!=$(@id)"/>
+            <condition expr="@ruleType=$(@ruleType)"/>
+            <condition expr="@messageType=$(@messageType)"/>
+            <condition expr="[@localOrgUnit-id]=0"/>
+          </sysFilter>
+        </input>
+      </container>
+    </container>
+
+  </container>
+</form>

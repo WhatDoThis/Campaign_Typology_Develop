@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+lgu.LGU_TARGET_TYPE_FATIGUE_M ([LGU] 타겟유형 피로도 관리)
+============================================================
+lgu:LGU_TARGET_TYPE_M 의 NO·TYPE_DETAIL 을 참조하는 피로도 운영 테이블.
+스키마 FK 없음 — UI에서 마스터 선택 후 NO·TYPE_DETAIL 복사 저장.
+lguFatigueRuleSync.js 가 CRUD → nms:typologyRule Pressure Rule sync.
+
+[Main Functions]
+===========
+- LGU_TARGET_TYPE_M_NO / TYPE_DETAIL: 타겟유형 마스터 참조 (값 복사)
+- ruleInternalName: nms:typologyRule @name (RLSmsMms* prefix)
+- capCount / periodDays / messageType: Pressure Rule Quantity·Period·Channel
+- managedBySync: JS sync 대상 여부
+
+[Endpoints/Classes/Functions]
+=======================
+- element LGU_TARGET_TYPE_FATIGUE_M
+- key messageTypeTargetKey, ruleNameKey
+- method DeleteWithRuleSync
+
+[Dependencies]
+=========
+- lgu:LGU_TARGET_TYPE_M (마스터 — 조인 없음)
+- lgu:delivery (@LGU_TARGET_TYPE_M_NO — Pressure deliveryFilter)
+- lgu:lguFatigueRuleSync
+- nms:typologyRule, nms:typology
+-->
+<srcSchema _cs="[LGU] 타겟유형 피로도 (lgu)" created="2026-09-08 05:00:00.000Z"
+           createdBy-id="0" entitySchema="xtk:srcSchema" img="nms:typologyRule.png"
+           label="[LGU] 타겟유형 피로도" labelSingular="[LGU] 타겟유형 피로도"
+           lastModified="2026-09-08 05:00:00.000Z" mappingType="sql" modifiedBy-id="0"
+           name="LGU_TARGET_TYPE_FATIGUE_M" namespace="lgu" xtkschema="xtk:srcSchema">
+
+  <enumeration name="messageType" template="nms:delivery:messageType"/>
+
+  <element autopk="true" label="[LGU] 타겟유형 피로도" name="LGU_TARGET_TYPE_FATIGUE_M"
+           pkSequence="XtkNewId" sqltable="LGU_TARGET_TYPE_FATIGUE_M">
+
+    <compute-string expr="Iif(@ruleInternalName!='', @ruleInternalName,
+                              @messageType + ' / NO=' + @LGU_TARGET_TYPE_M_NO
+                              + ' (' + @capCount + ')')"/>
+
+    <!-- 타겟유형 마스터 참조 (FK 없음) -->
+    <attribute desc="lgu:LGU_TARGET_TYPE_M/@NO. 0=채널 TOTAL(filter 없음)."
+               label="유형마스터번호" name="LGU_TARGET_TYPE_M_NO"
+               sqlname="LGU_TARGET_TYPE_M_NO" type="long"/>
+    <attribute desc="마스터 @TYPE_DETAIL 스냅샷. UI 표시용."
+               label="유형내용" length="200" name="TYPE_DETAIL"
+               sqlname="TYPE_DETAIL" type="string"/>
+
+    <!-- Sync identity -->
+    <attribute desc="nms:typologyRule/@name. RLSmsMms prefix 필수."
+               label="Rule internal name" length="64" name="ruleInternalName"
+               required="true" type="string"/>
+    <attribute desc="연결 Typology @name."
+               label="Typology internal name" length="64" name="typologyInternalName"
+               required="true" type="string"/>
+    <attribute default="0" desc="Delivery @messageType. 0=Email 등."
+               enum="messageType" label="Message type" name="messageType"
+               required="true" type="byte"/>
+    <attribute default="10" label="Execution order" name="executionOrder" type="long"/>
+    <attribute default="true" label="Managed by sync" name="managedBySync" type="boolean"/>
+    <attribute label="Last sync at" name="lastSyncAt" type="datetime"/>
+    <attribute label="Last sync status" length="512" name="lastSyncStatus" type="string"/>
+
+    <!-- Cap values -->
+    <attribute label="Cap count" name="capCount" required="true" type="long"/>
+    <attribute label="Period (days)" name="periodDays" required="true" type="long"/>
+    <attribute default="true" label="Active" name="active" type="boolean"/>
+    <attribute label="Label" length="128" name="label" type="string"/>
+
+    <key internal="true" name="messageTypeTargetKey">
+      <keyfield xpath="@messageType"/>
+      <keyfield xpath="@LGU_TARGET_TYPE_M_NO"/>
+    </key>
+    <key internal="true" name="ruleNameKey">
+      <keyfield xpath="@ruleInternalName"/>
+    </key>
+  </element>
+
+  <methods>
+    <method library="lgu:lguFatigueRuleSync" name="DeleteWithRuleSync" static="true">
+      <help>Deletes managed Pressure Rule (RLSmsMms*) then fatigue row.</help>
+      <parameters>
+        <param desc="Fatigue row id" inout="in" name="fatigueId" type="long"/>
+      </parameters>
+    </method>
+  </methods>
+</srcSchema>

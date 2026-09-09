@@ -1,0 +1,2732 @@
+<srcSchema desc="Defines the parameters of a delivery (or of a delivery template)."
+           entitySchema="xtk:srcSchema" img="nms:campaign.png" implements="xtk:persist"
+           label="Deliveries" labelSingular="Delivery" md5="C1DD2854010CCCF35ED1051D00E61CE7"
+           name="delivery" namespace="nms" useRecycleBin="true" xtkschema="xtk:srcSchema">
+
+  <!-- ===============
+       Schema Overview
+       =============== -->
+  <help>
+    <para>This schema represents a delivery action or template.</para>
+    <para>A template is a delivery template including all the necessary parameters. A delivery template can be executed manually from the client console, or executed when an event occurs (started from the scheduler, or programmatically from an SOAP call).</para>
+  </help>
+
+  <!-- ================
+       Enum definitions
+       ================  -->
+  <enumeration basetype="byte" default="bulk" label="Delivery mode" name="deliveryMode">
+    <help>Mode used for the delivery of messages.</help>
+    <value desc="Declaration of a delivery not performed by the platform itself."
+           label="External" name="external" value="0"/>
+    <value desc="Campaign delivery." label="Bulk delivery" name="bulk" value="1"/>
+    <value desc="Description of a non-executable delivery." label="Description" name="descriptive"
+           value="2"/>
+    <value desc="Delivery through a remote Adobe Campaign platform (mid-sourcing)."
+           label="Mid-sourcing" name="midSourcing" value="4"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="mail" label="Channel" name="messageType">
+    <help>Type of messages to send.</help>
+    <value desc="Email channel" img="nms:email.png" label="Email" name="mail" value="0"/>
+    <value desc="Mobile channel (SMS)" img="nms:mobile.png" label="Mobile (SMS)"
+           name="sms" value="1"/>
+    <value desc="Telephone channel" img="nms:phone.png" label="Phone" name="phone"
+           value="2"/>
+    <value desc="Direct mail channel" img="nms:paper.png" label="Direct Mail" name="paper"
+           value="3"/>
+    <value desc="Fax channel" img="nms:fax.png" label="Fax" name="fax" value="4"/>
+    <value applicableIf="HasPackage('nms:centralLocal')" desc="Agency channel" img="nms:agency.png"
+           label="Agency" name="agency" value="5"/>
+    <value applicableIf="HasPackage('nms:social')" desc="Facebook channel" img="nms:facebook.png"
+           label="Facebook" name="facebook" value="20"/>
+    <value applicableIf="HasPackage('nms:social')" desc="X (Twitter) Channel" img="nms:twitter.png"
+           label="X (Twitter)" name="twitter" value="25"/>
+    <value applicableIf="HasPackage('nms:mobileApp')" desc="iOS applications channel"
+           img="nms:ios.png" label="iOS channel" name="ios" value="41"/>
+    <value applicableIf="HasPackage('nms:mobileApp')" desc="Android applications channel"
+           img="nms:android.png" label="Android channel" name="android" value="42"/>
+    <value applicableIf="HasPackage('nms:line') OR HasPackage('nms:lineV2')" desc="LINE channel"
+           img="nms:line.png" label="LINE" name="line" value="61"/>
+    <value desc="Other channel" img="nms:other.png" label="Other" name="other" value="120"/>
+    <!-- value 127 (a.k.a all channels) is already defined in other schemas (i.e nms:operation, nms:remaHypothesis, nms:typologyRule)-->
+    <!-- NEO-34473: make sure enum value is in the range of one byte signed-->
+    <value desc="Undefined channel" img="nms:other.png" label="Undefined" name="undefined"
+           value="126"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="edition" label="Delivery status" name="deliveryState">
+    <!-- not if you change or add some values here, you have to care about s_aiStateTable in nmsdelivery.cpp -->
+    <value img="nms:dedit.png" label="Being edited" name="edition" value="0"/>
+
+    <value img="nms:prepare.png" label="Targeting pending" name="targetPrepPending"
+           value="11"/>
+    <value img="nms:prepare.png" label="Counting in progress" name="targetSelection"
+           value="12"/>
+    <value img="nms:prepare.png" label="Arbitration in progress" name="targetArbitration"
+           value="13"/>
+    <value img="nms:toprepare.png" label="Target ready" name="targetReady" value="15"/>
+
+    <value img="nms:prepare.png" label="Personalization pending" name="messagePrepPending"
+           value="21"/>
+    <value img="nms:prepare.png" label="Personalization in progress" name="messagePreparation"
+           value="22"/>
+    <value img="nms:toprepare.png" label="Message finalized" name="messageReady"
+           value="25"/>
+
+    <value img="nms:error.png" label="Personalization or count failed" name="preparationError"
+           value="37"/>
+
+    <value img="nms:tovalidate.png" label="Ready to be delivered" name="ready" value="45"/>
+    <!-- state <= ready => the mta doesn't consider the delivery
+         state >  ready => the mta is in charge with it -->
+
+    <value img="nms:started.png" label="Start pending" name="startPending" value="51"/>
+    <value img="nms:started.png" label="In progress" name="started" value="55"/>
+
+    <value img="nms:wretry.png" label="Retry pending" name="retryPending" value="61"/>
+    <value img="nms:retry.png" label="Retry in progress" name="retryInProgress" value="62"/>
+
+    <value img="nms:pause.png" label="Pause requested" name="pausePending" value="71"/>
+    <value img="nms:pause.png" label="Pause in progress" name="pauseInProgress" value="72"/>
+    <value img="nms:pause.png" label="Paused" name="paused" value="75"/>
+
+    <value img="nms:canceled.png" label="Stop requested" name="cancelPending" value="81"/>
+    <value img="nms:canceled.png" label="Stop in progress" name="cancelInProgress"
+           value="82"/>
+    <value img="nms:canceled.png" label="Stopped" name="cancelled" value="85"/>
+
+    <value img="nms:error.png" label="Failed" name="failed" value="87"/>
+    <value img="nms:finished.png" label="Finished" name="finished" value="95"/>
+
+    <value img="nms:recycle.png" label="Deleted" name="deleted" value="100"/>
+  </enumeration>
+
+  <!-- Enum for message center: publication status -->
+  <enumeration basetype="byte" default="notApplicable" label="Publication status"
+               name="publicationStatus">
+    <value img="nms:delivery.png" label="Not applicable" name="notApplicable" value="0"/>
+    <value img="nms:dedit.png" label="Being edited" name="edition" value="1"/>
+    <value img="nms:prepare.png" label="Published" name="deployed" value="2"/>
+    <value img="nms:error.png" label="Failed" name="failed" value="3"/>
+    <value img="nms:prepare.png" label="In production" name="production" value="100"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="starting" label="Analysis progress" name="analysisStep">
+    <help>These values represent the state of progress of the delivery analysis to help when resuming analysis in case of hardware or software errors</help>
+    <value label="Starting" name="starting" value="0"/>
+    <value label="Delivery ready for analysis" name="initDelivery" value="1"/>
+    <value label="Initialization finished" name="initialized" value="2"/>
+    <value label="Typology rules applied" name="jsRulesApplied" value="3"/>
+    <value label="Finished creating work tables for delivery analysis" name="createWorkTable"
+           value="4"/>
+    <value label="Finished preparing the delivery in the work tables" name="fillWorkTable"
+           value="5"/>
+    <value label="SQL rules applied" name="sqlRulesApplied" value="6"/>
+    <value label="Limit to delivery recipients applied" name="truncateRecipient"
+           value="7"/>
+    <value label="Targeting complete" name="targetFinalized" value="8"/>
+    <value label="Assembly of the main delivery target complete" name="collectDistributed"
+           value="9"/>
+    <value label="Generated propositions" name="propositionGenerated" value="10"/>
+    <value label="Finalized SQL rules" name="sqlRulesFinalized" value="11"/>
+    <value label="Items attached to the delivery" name="attachmentProcessed" value="12"/>
+    <value label="Finished assigning coupons" name="coupons" value="13"/>
+    <value label="Finished preparing delivery fragments" name="deliveryParts" value="14"/>
+    <value label="Delivery logs exported" name="export" value="15"/>
+    <value label="Finished preparing delivery logs" name="broadLogs" value="16"/>
+    <value label="Delivery analysis finished" name="finished" value="17"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="database" label="Target Selection Mode" name="targetMode">
+    <help>These values define the method used to set the list of recipients during the analysis of the action.</help>
+    <value desc="Deliver message to recipients existing in NmsRecipient table of the database."
+           img="nms:segment.png" label="Recipients from the database" name="database"
+           value="0"/>
+    <value desc="Deliver message to recipients from in a file." img="nms:filecolumn.png"
+           label="File based external data source." name="file" value="1"/>
+    <value desc="Deliver message to recipients not existing in the database." label="List of addresses"
+           name="address" value="2"/>
+    <value label="Population resulting from inbound event(s)" name="evtDatabase"
+           value="3"/>
+    <value label="File resulting from the inbound event" name="evtFile" value="4"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="yes" label="Tracking type" name="trackingType">
+    <help>These values define how a URL must be processed by the tracking module.</help>
+    <value desc="Activate the tracking on this URL." label="Enabled" name="yes" value="0"/>
+    <value desc="Do not activate the tracking of this URL." label="Not tracked" name="no"
+           value="1"/>
+    <value desc="Always activate the tracking of this URL. This information is saved so that the next time, if the URL appears again in a future document, its tracking be automatically activated."
+           label="Always enabled" name="always" value="2"/>
+    <value desc="Do never activate the tracking of this URL. This information is saved so that the next time, if the URL appears again in a future document, its tracking be automatically deactivated."
+           label="Never tracked" name="never" value="3"/>
+    <value desc="Consider this URL as an opt-out or unsubscription URL." label="Opt-out"
+           name="optout" value="4"/>
+    <value desc="Consider the URL is a mirror page URL." label="Mirror page" name="mirrorPage"
+           value="5"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="yes" label="Include images in the email"
+               name="multipartRelated">
+    <value label="Do not embed in the email" name="no" value="0"/>
+    <value label="Embed in the email" name="yes" value="1"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="manual" label="Approval mode" name="validationMode">
+    <value desc="Delivery will start only after a manual validation by a user." label="Manual"
+           name="manual"/>
+    <value desc="Delivery automatically starts if analysis does not generate warnings."
+           label="Semi-automatic" name="secure"/>
+    <value desc="Delivery automatically starts once analysis completed (even if it generates warnings)."
+           label="Automatic" name="auto"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="normal" label="Priority" name="messagePriority">
+    <help>Priority management can be summarized as follows:
+      <itemizedlist>
+        <listitem>
+          <para>Messages of same priority are concurrently sent.</para>
+        </listitem>
+        <listitem>
+          <para>The system does not re-arrange the message queue depending on priorities, it only grants a higher importance to messages of high priority. For example, it will send 31 messages of priority "Very High" for 1 message of priority "Very low". As a result, messages of lower priority are not totally left in queue but their delivery rate is just slowed when messages of higher priority are in the queue.</para>
+        </listitem>
+      </itemizedlist>
+    </help>
+    <value label="Very High" name="highest" value="32"/>
+    <value label="High" name="high" value="20"/>
+    <value label="Higher than normal" name="aboveNormal" value="15"/>
+    <value label="Normal" name="normal" value="10"/>
+    <value label="Low" name="belowNormal" value="5"/>
+    <value label="Very Low" name="low" value="1"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="preferences" label="Format choice" name="formatSelection">
+    <value desc="Use recipient preferences" label="Recipient preferences" name="preferences"/>
+    <value desc="Let recipient mail client choose the most appropriate format (multipart-alternative)"
+           label="Multipart format" name="multipart"/>
+    <value desc="Send all messages in text format." label="Text format" name="text"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="new" label="Status of images" name="imageState">
+    <value desc="This image is not yet online (to send by default)" label="Not yet online"
+           name="new" value="0"/>
+    <value desc="This image is already online" label="Already online" name="onLine"
+           value="1"/>
+    <value desc="This image is not to be processed" label="Skipped (do not put online)"
+           name="ignore" value="2"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="SIMSpecific" label="SMS mode" name="smsMode">
+    <help>Defines the SMS transmission mode. These transmission modes are part of the GSM/SMS communication standard.</help>
+    <value desc="Immediate display. The message will be saved on the mobile phone."
+           label="Flash" name="Immediate" value="0"/>
+    <value desc="The message will be saved on the SIM card." label="Normal" name="SIMSpecific"
+           value="1"/>
+    <value desc="The message will be saved on the mobile." label="Saved on mobile"
+           name="MobileSpecific" value="2"/>
+    <value desc="The message will be saved on the terminal." label="Saved on terminal"
+           name="TeminalSpecific" value="3"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="Normal" label="SMS priority" name="smsPriority">
+    <help>
+      Information forwarded to the SMS gateway to specify the message priority.
+      Warning: for some gateways, using <emphasis>High</emphasis> and <emphasis>Urgent</emphasis> priorities is a pay-for option.
+    </help>
+    <value desc="The message is put at the end of the message queue." label="Normal"
+           name="Normal" value="0"/>
+    <value desc="The message is put at the end of the queue of the High priority messages. All messages of priority High are sent before the messages of priority Normal."
+           label="High" name="Hight" value="1"/>
+    <value desc="The message is put at the end of the queue of the Urgent priority messages. All messages of priority Urgent are sent before the messages of lower priority."
+           label="Urgent" name="Urgent" value="2"/>
+  </enumeration>
+
+  <enumeration basetype="long" default="marketing" label="Communication type" name="smsAppType">
+    <value label="Closed Group of Users" name="GFU" value="0"/>
+    <value label="Delivery" name="Delivery" value="1"/>
+    <value label="Direct Marketing" name="marketing" value="2"/>
+    <value label="Mailing" name="mailing" value="3"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="sms" label="Mobile message type" name="mobileMsgType">
+    <value label="SMS" name="sms" value="0"/>
+    <value label="WAP Push" name="wapPush" value="1"/>
+    <value label="MMS" name="mms" value="2"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="constant" label="Weight type" name="weightType">
+    <value label="Constant" name="constant" value="0"/>
+    <value label="Depends on the recipient" name="formula" value="1"/>
+    <value label="Defined in each rule" name="rule" value="2"/>
+  </enumeration>
+  <enumeration basetype="byte" default="constant" label="Weight type" name="simuResponseType">
+    <value label="Constant" name="constant" value="0"/>
+    <value label="Depends on the recipient" name="formula" value="1"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="Normal" label="Attached file type" name="attachmentType"> <!-- ### find icons -->
+    <help>Attached file type</help>
+    <value desc="File name is specified when creating the delivery template" label="Constant file name"
+           name="normal"/>
+    <value desc="The content of the file is personalized and converted to PDF during the delivery of each message."
+           label="Personalized PDF file" name="pdf"/>
+    <value desc="The file name is computed during delivery analysis (it cannot depend on the recipient profile)."
+           label="Computed during analysis" name="preparation"/>
+    <value desc="File name is computed during delivery for each message (it can depend on the recipient profile)."
+           label="Computed during delivery for each message" name="sending"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="none" desc="Failures retrieval mode for external deliveries."
+               label="Failures retrieval mode" name="feedbackMode">
+    <value desc="Messages are considered sent after validation." label="Nothing retrieved"
+           name="none"/>
+    <value desc="A result file determines sent and failed messages." label="Result file"
+           name="file"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="normal" label="Formats for proof messages"
+               name="fcpMailFormat">
+    <value label="Single message (normal behavior)" name="normal"/>
+    <value label="Send two messages (text and multipart-alternative)" name="textMultipart"/>
+    <value label="Send three messages (text, HTML and multipart-alternative)" name="allFormats"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="specificTarget" label="Formats for proof messages"
+               name="fcpMode">
+    <value desc="Definition of a specific proof target" label="Specific target" name="specificTarget"/>
+    <value enabledIf="'$(entityPath)'='/delivery'" label="Substitution of the address"
+           name="substituteAddress"/>
+    <value label="Seed addresses" name="seedList"/>
+    <value label="Specific target and Seed addresses" name="mixedMode"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="default" desc="Mirror page management parameters"
+               name="mirrorPagePolicy">
+    <value desc="Generate the mirror page if a mirror link appears in the email content"
+           name="default"/>
+    <value desc="Force the generation of the mirror page" name="yes"/>
+    <value desc="Do not generate the mirror page" name="no"/>
+    <value desc="Generates a mirror page accessible using only the message identifier"
+           name="fromMsgId"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="unknown" desc="Indicates of the delivery uses the mirror page"
+               name="needMirrorPage">
+    <value name="unknown" value="0"/>
+    <value name="yes" value="1"/>
+    <value name="no" value="2"/>
+    <value name="fromMsgId" value="3"/>
+  </enumeration>
+
+  <enumeration basetype="byte" label="Update flags" name="dirtyFlags">
+    <value label="Up to date" name="none" value="0"/>
+    <value label="Tracking" name="tracking" value="1"/>
+    <value label="Errors" name="errors" value="2"/>
+    <value label="Reset tracking" name="resetTracking" value="4"/>
+    <value label="Message counters" name="messageCounters" value="8"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="empty" label="URL flags" name="urlFlags">
+    <value label="Empty" name="empty" value="0"/>
+    <value label="Fixed label" name="fixedLabel" value="1"/>
+    <value label="Fixed category" name="fixedCategory" value="2"/>
+    <value label="Fixed type" name="fixedType" value="4"/>
+  </enumeration>
+
+  <enumeration basetype="long" default="utf8" label="Encoding" name="codepage">
+    <help>Character encoding for messages.</help>
+    <value label="UTF-8" name="utf8" value="65001"/>
+    <value label="Central Europe (1250)" name="latin2" value="1250"/>
+    <value label="Cyrillic (1251)" name="cyrilic" value="1251"/>
+    <value label="Latin 1 (1252)" name="latin1" value="1252"/>
+    <value label="ISO Latin 9 (28605)" name="iso885915" value="28605"/>
+    <value label="Greek (1253)" name="greek" value="1253"/>
+    <value label="Turkish (1254)" name="turkish" value="1254"/>
+    <value label="Hebrew (1255)" name="hebrew" value="1255"/>
+    <value label="Arabic (1256)" name="arabic" value="1256"/>
+    <value label="Baltic (1257)" name="baltic" value="1257"/>
+    <value label="Vietnam (1258)" name="vietnam" value="1258"/>
+    <value label="Thai (874)" name="thai" value="874"/>
+    <value label="Japanese (Shift-JIS 932)" name="shiftjis" value="932"/>
+    <value label="Japanese (ISO 2022)" name="iso2022" value="50220"/>
+    <value label="Traditional Chinese (Big5 950)" name="big5" value="950"/>
+    <value label="Simplified Chinese (GB2312)" name="gb2312" value="936"/>
+    <value label="Korean (EUC-Korean 51949)" name="euckorean" value="51949"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="prepare" label="Execution type" name="launchType">
+    <value label="Standard preparation" name="prepare" value="0"/>
+    <value label="Proof preparation" name="FCP" value="1"/>
+    <value label="Prepare and execute Proof" name="execFCP" value="2"/>
+    <value label="Prepare and execute an IR" name="execIR" value="3"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="default" label="Content editing mode" name="contentEditingMode">
+    <value label="Default" name="default" value="0"/>
+    <value label="DCE" name="dce" value="1"/>
+    <value applicableIf="HasPackage('nms:aemIntegration')" label="AEM" name="aem"
+           value="2"/>
+  </enumeration>
+
+  <!-- =========================
+       Paper delivery parameters
+       ========================= -->
+  <enumeration basetype="string" default="simple" name="paperContentType">
+    <value desc="Simple content" img="xtk:dataTransfer/simple.png" label="Simple content"
+           name="simple"/>
+    <value desc="Multiple content" img="xtk:dataTransfer/batch.png" label="Multiple content"
+           name="multiple"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="print" name="compressMode">
+    <value desc="75 DPI compression" label="Screen" name="screen"/>
+    <value desc="300 DPI compression" label="Printing" name="print"/>
+    <value desc="1200 DPI compression" label="Press" name="press"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="bw" label="Color support" name="colorSupport">
+    <value label="Black &amp; White" name="bw"/>
+    <value label="Color" name="color"/>
+  </enumeration>
+  <enumeration basetype="string" default="recto" label="Double-sided" name="rectoVerso">
+    <value label="Single-sided" name="recto"/>
+    <value label="Double-sided" name="rectoverso"/>
+  </enumeration>
+  <enumeration basetype="string" default="C6SW" label="Envelop type" name="envelope">
+    <value label="Auto-Detect format" name="AUTO"/>
+    <value label="Large envelop; C4 format (332 x 230 mm)" name="C4"/>
+    <value label="Small envelop; C6 format (229 x 114 mm) simple window" name="C6SW"/>
+    <value label="Small envelop; C6 format (229 x 114 mm) double window" name="C6DW"/>
+  </enumeration>
+  <enumeration basetype="string" default="ownPage" label="Address position" name="addressPos">
+    <value label="Add addresses on a dedicated page" name="ownPage"/>
+    <value label="Add addresses on the document first page" name="firstPage"/>
+  </enumeration>
+  <enumeration basetype="string" default="letterPrio" label="Stamping category" name="priceCategory">
+    <value label="Letter rate - first class" name="letterPrio"/>
+    <value label="Bulk rate (economical)" name="ecoPli"/>
+    <value label="Ecopli rate (bulk)" name="ecoPliBulk"/>
+    <value label="Mechanized PostImpact rate; threshold 1 (C6 envelop)" name="postImpact1_C6"/>
+    <value label="Mechanized PostImpact rate; threshold 2 (C6 envelop)" name="postImpact2_C6"/>
+    <value label="Standard PostImpact rate; threshold 1 (C4 envelop)" name="postImpact1_C4"/>
+    <value label="Standard PostImpact rate; threshold 2 (C4 envelop)" name="postImpact2_C4"/>
+    <value label="Electronic Registered letter from La Poste (R1)" name="recom_R1"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="split" name="wavesMode">
+    <value desc="Multiple waves of the same size." label="Waves" name="split" value="0"/>
+    <value desc="Waves defined by a calendar." label="Calendar" name="calendar" value="1"/>
+    <value desc="Average on a period." label="Averaged" name="smooth" value="2"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="none" name="segmentCodeType">
+    <value desc="Do not force a segment code" label="None" name="none"/>
+    <value desc="Use the fixed value specified in the target part" label="Fixed value"
+           name="constant"/>
+    <value desc="Use the computation expression specified in the target part" label="Computed value"
+           name="calculated"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="statusWithLink" label="Type of Facebook content"
+               name="fcbContentType">
+    <value label="Status" name="status" value="1"/>
+    <value label="Status with a link" name="statusWithLink" value="0"/>
+    <value label="Status with a YouTube link" name="statusWithYoutubeLink" value="3"/>
+    <value label="Photo album" name="photo" value="5"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="text" label="LINE content type" name="lineContentType">
+    <value label="Text message" name="text"/>
+    <value label="Image and link" name="image"/>
+    <value label="Video message" name="video"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="line" name="lineVersion">
+    <value label="Line Version V1" name="line"/>
+    <value label="Line Version V2" name="lineV2"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="pushMsg" label="LINE Delivery Type" name="lineDeliveryType">
+    <value label="Reply Message" name="replyMsg"/>
+    <value label="Push Message" name="pushMsg"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="manual" label="Type of LINE images" name="lineImageType">
+    <value label="Manual input" name="manual"/>
+    <value label="Personalized URL" name="personalized"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="type1" label="Layout Type of LINE Multi-region Image"
+               name="lineMultiRegionLayoutType">
+    <value label="Layout Type 1" name="type1" value="1"/>
+    <value label="Layout Type 2" name="type2" value="2"/>
+    <value label="Layout Type 3" name="type3" value="3"/>
+    <value label="Layout Type 4" name="type4" value="4"/>
+    <value label="Layout Type 5" name="type5" value="5"/>
+    <value label="Layout Type 6" name="type6" value="6"/>
+    <value label="Layout Type 7" name="type7" value="7"/>
+    <value label="Layout Type 8" name="type8" value="8"/>
+  </enumeration>
+
+  <!-- ============================
+       Android Channel Enumeration
+       ============================ -->
+  <enumeration default="false" name="androidSticky">
+    <value label="False" name="false"/>
+    <value label="True" name="true"/>
+  </enumeration>
+
+  <enumeration default="PRIORITY_DEFAULT" name="androidNotificationPriority">
+    <value label="Default" name="PRIORITY_DEFAULT"/>
+    <value label="Min" name="PRIORITY_MIN"/>
+    <value label="Low" name="PRIORITY_LOW"/>
+    <value label="High" name="PRIORITY_HIGH"/>
+  </enumeration>
+
+  <enumeration default="PRIVATE" name="androidVisibility">
+    <value label="Private" name="PRIVATE"/>
+    <value label="Public" name="PUBLIC"/>
+    <value label="Secret" name="SECRET"/>
+  </enumeration>
+
+  <!-- ============================
+       iOs Channel Enumeration
+       ============================ -->
+  <enumeration basetype="string" default="ACTIVE" name="iosInterruptionLevel">
+    <value label="Active" name="active" value="ACTIVE"/>
+    <value label="Passive" name="passive" value="PASSIVE"/>
+    <value label="Time-sensitive" name="timesensitive" value="TIME_SENSITIVE"/>
+    <value label="Critical" name="critical" value="CRITICAL"/>
+  </enumeration>
+
+  <!-- ============================
+       Delivery targets definitions (database target mode)
+       ============================ -->
+  <element label="Target" name="target">
+    <help>Delivery target population. Target is made of a set of conditions. A recipient belongs to the target population if it meets at least one condition.</help>
+    <attribute desc="Human serialization of the segmentation query" label="Target"
+               name="serialization" type="string"/>
+    <attribute advanced="true" default="false" desc="True if the target is not empty"
+               label="Target is not empty" name="nonEmpty" type="boolean"/>
+    <element label="Query Condition" name="targetPart" unbound="true">
+      <help para="true">This element represents one of the conditions used to compute the target audience of a proof or of the delivery.</help>
+      <element desc="Filtering condition for a target of type 'query'" label="Condition"
+               name="where" unbound="true">
+        <element aggregate="xtk:queryDef:where" name="where"/>
+        <attribute expr="[../../../@filteringSchema]" label="Filtering schema" name="filteringSchema"
+                   pkgStatus="always" type="string"/>
+        <attribute label="Filter name" name="filterName" type="string"/>
+        <element desc="Context of the condition" label="Context" name="ctx" type="ANY"/>
+      </element>
+      <attribute desc="Condition label" label="Label" localizable="true" name="label"
+                 type="string"/>
+      <attribute advanced="true" desc="label automatically computed based on the filter"
+                 label="Computed label" localizable="true" name="computedLabel" type="string"/>
+      <attribute default="false" desc="Exclude recipients from this segment" label="Segments to exclude"
+                 name="exclusion" type="boolean"/>
+      <attribute default="false" label="Take in to account records flagged as deleted"
+                 name="ignoreDeleteStatus" type="boolean"/>
+      <attribute enum="segmentCodeType" label="Segment code type" name="segmentCodeType"
+                 type="string"/>
+      <attribute label="Segment code" length="16" name="segmentCodeVal" type="string"/>
+      <attribute label="Query hint for Oracle" name="oracleHint" type="string"/>
+      <element label="Segment code expression" name="segmentCodeExpr" type="CDATA"/>
+      <element desc="ToolTip" label="Help" name="help" type="string"/>
+    </element>
+  </element>
+  <!-- ============================
+       Delivery targets definitions (file target mode)
+       ============================ -->
+  <element name="targetFile" template="xtk:common:fileToUpload">
+    <attribute default="false" desc="If the delivery analysis completes successfully, the document used as datasource is delete (use to make sure that a single file cannot be processed twice)."
+               label="Delete after import" name="autoDelete" type="boolean"/>
+  </element>
+
+  <!-- ===============
+       Image definitions
+       =============== -->
+  <element desc="Configuration of image handling" label="Configuration of images"
+           name="imageConfig">
+    <attribute desc="Path to the source file to which images URL are relative" label="Source file path"
+               name="startPath" type="string"/>
+    <element desc="Configuration of image handling" label="Image" name="image" ordered="true"
+             unbound="true">
+      <key name="md5">
+        <keyfield xpath="@md5"/>
+      </key>
+      <attribute desc="Image source (before patch)." label="Source" name="source"
+                 type="string"/>
+      <attribute default="false" desc="The image URL is relative" label="Relative"
+                 name="isRelative" type="boolean"/>
+      <attribute desc="MD5 code of the image content (not its name)" label="MD5"
+                 length="32" name="md5" type="string"/>
+      <attribute desc="Defines the status of the image" enum="imageState" label="Status of image"
+                 name="state" type="byte"/>
+      <attribute desc="Include the image in the email" enum="multipartRelated" label="Include image"
+                 name="multipartRelated" type="byte"/>
+      <attribute default="false" desc="Do not replace this source URL with the new one"
+                 label="Do not replace" name="doNotReplace" type="boolean"/>
+      <element desc="alternative source addresses found in the HTML" label="Alternative source"
+               name="alternativeSrc" unbound="true">
+        <key name="source">
+          <keyfield xpath="@source"/>
+        </key>
+        <attribute desc="Alternative image source" label="Source" name="source" type="string"/>
+        <attribute default="false" desc="Do not replace this source URL with the new one"
+                   label="Do not replace" name="doNotReplace" type="boolean"/>
+      </element>
+    </element>
+  </element>
+
+  <!-- ===============
+       URL definitions
+       =============== -->
+  <element desc="Tracking URLs configuration for one of the content of the scenario"
+           label="Configuration of URLs" name="urlConfig">
+    <element desc="Configuration of the URL tracking." label="URL" name="url" ordered="true"
+             unbound="true">
+      <help>Tracking configuration must be specified for each URL occurrence in the delivery content. If this configuration is not specified, tracking will not be activated.</help>
+      <key name="urlSource">
+        <keyfield xpath="@source"/>
+        <keyfield xpath="@occurrence"/>
+      </key>
+      <key name="tagId">
+        <keyfield xpath="@tagId"/>
+      </key>
+      <attribute desc="Identifier of the URL in the database for the delivery action."
+                 label="Identifier" name="urlId" type="long"/>
+      <attribute defOnDuplicate="true" desc="URL tag for the on-going job." label="Url identifier"
+                 name="tagId" type="string"/>
+      <attribute desc="Identifier of URL in database." label="Template" name="urlInfoId"
+                 type="long"/>
+      <attribute desc="pURL identifier which matches the current URL." label="pURL ID"
+                 name="purlId" type="long"/>
+      <attribute desc="Original source text of URL (before patching)." label="Source"
+                 name="source" type="string"/>
+      <attribute desc="URL occurrence index in the content (first is 1)." label="Occurrence index"
+                 name="occurrence" type="short"/>
+      <attribute desc="Label associated with URL in reports." label="Label" localizable="true"
+                 name="label" type="string"/>
+      <attribute desc="Label suggested by wizard." label="Automatic label" localizable="true"
+                 name="guessedLabel" type="string"/>
+      <attribute desc="Category of the URL" label="Category" localizable="true" name="category"
+                 type="string" userEnum="urlCategory"/>
+      <attribute desc="URL containing personalization parameters." label="URL with parameters"
+                 name="withParams" type="boolean"/>
+      <attribute desc="URL not referenced in database." label="New URL" name="newUrl"
+                 type="boolean"/>
+      <attribute desc="URL parameters have been modified by the user in the wizard."
+                 label="Modified URL" name="modified" type="boolean"/>
+      <attribute desc="Defines how the tracking must be done for this URL." enum="trackingType"
+                 label="Tracking type" name="trackingType" type="byte"/>
+      <attribute desc="Additional information on the origin of known information about the URL."
+                 enum="urlFlags" label="Additional information" name="flags" type="byte"/>
+      <attribute desc="Offer ID that matches the current URL." label="Offer ID" name="offerId"
+                 type="long"/>
+    </element>
+  </element>
+
+  <!-- ===================
+       Content definitions
+       =================== -->
+  <element desc="Definition of a content for a given message format" label="Content"
+           name="contentDef">
+    <attribute advanced="true" enum="trackingType" expr="''" label="Default URL tracking"
+               name="trackingType" type="byte" xml="true"/>
+    <attribute advanced="true" enum="nms:trackingUrlInfo:urlType" expr="''" label="Default URL types"
+               name="urlType" type="byte" xml="true"/>
+    <element desc="Content associated with this format." label="Content" localizable="true"
+             name="source" type="CDATA"/>
+    <element desc="Name of the file used the last time this content was loaded."
+             label="File" name="sourceFile" type="string"/> <!-- ### to use or to remove ??? + isn't it an attribute -->
+    <element label="Configuration of URLs of the content" name="urlConfig" ref="urlConfig"/>
+    <element label="Configuration of images referenced in the content" name="imageConfig"
+             ref="imageConfig"/>
+
+  </element>
+
+  <!-- ====================
+       Customization fields
+       ==================== -->
+  <element label="Personalization fields definition" name="customization">
+    <element desc="List of personalization fields to load" name="select" ref="xtk:queryDef:select"/>
+    <element desc="List of personalization fields automatically added since referenced in contents"
+             name="selectAuto" ref="xtk:queryDef:select"/>
+    <element desc="Collection links filtering condition" name="conditionLink" ref="xtk:queryDef:conditionLink"
+             unbound="true"/>
+  </element>
+
+  <!-- ====================
+       Forecast fields
+       ==================== -->
+  <element label="Provisional planning" name="forecastDef">
+    <attribute desc="Use the formulas to estimate answers" enum="nms:delivery:simuResponseType"
+               label="Parameter calculation mode" name="simuResponseType" type="byte"/>
+    <attribute label="Use a margin rate instead of a unit margin" name="simuMarginType"
+               type="boolean"/>
+    <attribute label="Estimated response rate as a %" name="simuResponseRate" type="double"/>
+    <attribute desc="Estimated revenue per response" label="Estimated revenue" name="simuRevenue"
+               type="double"/>
+    <attribute label="Estimated margin" name="simuMargin" type="double"/>
+    <element desc="Formula of the response rate estimated as a %" label="Estimated response rate as a %"
+             name="simuResponseRateFormula" type="string"/>
+    <element desc="Estimated revenue per response" label="Estimated revenue" name="simuRevenueFormula"
+             type="string"/>
+    <element label="Estimated margin" name="simuMarginFormula" type="string"/>
+  </element>
+
+  <!-- ============
+       Root element
+       ============ -->
+  <element autopk="true" enumImage="@messageType" folderLink="folder" folderModel="nmsDelivery"
+           folderProcess="folderProcess" img="nms:campaign.png" name="delivery" pkgAdmin="@isModel = 1 AND @id != 0"
+           sqltable="NmsDelivery" template="xtk:job">
+
+    <compute-string expr="@label+' ('+@internalName+')'"/>
+
+    <dbindex name="state">
+      <keyfield xpath="@state"/>
+    </dbindex>
+    <dbindex name="lastModifiedFlat">
+      <keyfield xpath="@lastModified"/>
+    </dbindex>
+    <dbindex name="lastModified">
+      <keyfield xpath="@folder-id"/>
+      <keyfield xpath="@lastModified"/>
+    </dbindex>
+    <dbindex name="deliveryCode">
+      <keyfield xpath="@deliveryCode"/>
+    </dbindex>
+    <dbindex name="midModified"> <!-- necessary for mid-sourcing receiver -->
+      <keyfield xpath="@deliveryMode"/>
+      <keyfield xpath="@lastModified"/>
+    </dbindex>
+
+    <!-- Change some labels of properties inherited from xtk:job (and remove some useless parameters) -->
+    <attribute default="GetOption('XtkInstancePrefix')+'DM'+CounterValue('nmsDeliveryModel')"
+               name="internalName"/>
+    <attribute desc="Start date of the delivery analysis (or of the last provisional analysis)."
+               label="Analysis start" name="startDate"/>
+    <attribute desc="End date of the delivery analysis (or of the last provisional analysis)."
+               label="Analysis completed" name="endDate"/>
+    <attribute advanced="true" defOnDuplicate="true" label="Content modification date"
+               name="contentModTime" type="datetime"/>
+    <attribute defOnDuplicate="true" label="Application built-in scenario" name="builtIn"/>
+    <attribute dbEnum="deliveryNature" desc="Delivery nature" label="Nature" length="64"
+               name="nature" type="string"/>
+    <attribute advanced="true" label="Analysis status" name="status"/>
+    <attribute advanced="true" default="'delivery'" name="jobType"/>
+    <attribute desc="This record is a delivery template." label="Template" name="isModel"/>
+    <element desc="Logs of the delivery." label="Logs" name="log"/>
+    <attribute expr="'prepareda'" name="module" type="string"/>
+    <attribute _operation="delete" name="doNotPersist"/>
+    <attribute _operation="delete" name="img"/>
+    <attribute _operation="delete" name="form"/>
+    <attribute _operation="delete" name="editForm"/>
+    <element aggregate="nms:common:acsSourceId"/>
+
+    <attribute advanced="true" label="Use the new content editor ('DCE')" name="useDce"
+               type="boolean"/>
+    <attribute advanced="true" label="Use AEM as content editor or as an asset library"
+               name="useAEM" type="boolean" xml="true"/>
+    <!-- Duplicated @contentEditingMode in delivery.xml form for duplication -->
+    <attribute advanced="true" enum="contentEditingMode" expr="Iif(@useDce, 1, Iif(HasPackage('nms:aemIntegration') and @useAEM, 2, 0))"
+               label="Content editing mode" name="contentEditingMode" type="byte"
+               xml="true"/>
+
+    <attribute advanced="true" defOnDuplicate="true" enum="analysisStep" label="Current analysis step"
+               name="analysisStep" type="byte"/>
+
+    <!-- link to the delivery provider (to define messageType and deliveryMode)
+         Attention: default provider must correspond to default deliveryMode and
+         default message type -->
+    <element default="LoadInstance(GetOption('NmsBroadcast_DefaultProvider'))" desc="Routing outsourcer used for delivery"
+             label="Routing" name="deliveryProvider" required="true" revIntegrity="define"
+             target="nms:extAccount" type="link"/>
+
+    <!-- Some general delivery properties -->
+    <attribute default="[/delivery/deliveryProvider/@messageType]" desc="Type of message to send."
+               enum="messageType" label="Channel" name="messageType" type="byte"/>
+    <attribute default="[/delivery/deliveryProvider/@deliveryMode]" desc="Mode used for the delivery of messages."
+               enum="deliveryMode" label="Mode" name="deliveryMode" type="byte"/>
+    <attribute defOnDuplicate="true" desc="Delivery status" enum="deliveryState"
+               label="Status" name="state" type="byte"/>
+    <attribute defOnDuplicate="true" desc="The delivery is a proof delivery." label="Send a Proof"
+               name="FCP" type="boolean"/>
+    <attribute advanced="true" desc="The analysis of the delivery will create a proof for this delivery."
+               enum="launchType" label="Send a proof" name="launchFCP" type="byte"
+               xml="true"/>
+    <attribute advanced="true" desc="The delivery has been submitted by a remote platform in mid-sourcing mode."
+               label="Mid-sourcing relay" name="midSourcing" type="boolean"/>
+    <attribute advanced="true" defOnDuplicate="true" desc="Submission date on the mid-sourcing server."
+               label="Mid-sourcing submission date" name="midSubmitDate" type="datetime"
+               xml="true"/>
+    <attribute advanced="true" desc="Identifier of the delivery in the marketing database (not equal to the internal identifier only in mid-sourcing mode)."
+               expr="Iif(@midSourcing!=0, [properties/@midRemoteId], @id)" label="Marketing ID"
+               name="idMarketing" type="long"/>
+    <attribute advanced="true" desc="Delivery identifier for tracking (hexadecimal)"
+               expr="ToHex(@idMarketing)" label="Tracking ID" name="idTracking" type="string"
+               xml="true"/> <!-- FB 2006-11-28 this field is XML because I didn't find how to easily implement ToHex in MsSQL -->
+    <attribute desc="Priority of messages in the delivery server queue." enum="messagePriority"
+               label="Delivery priority" name="priority" type="byte"/>
+    <attribute desc="External identifier for the delivery." label="Delivery code"
+               length="36" name="deliveryCode" type="string"/>
+
+    <attribute advanced="true" expr="Iif([properties/@midAccountUsedName]!='' and [@mapping-id]!=0, GetMirrorURL([properties/@midAccountUsedName]), Iif([deliveryProvider/@mirrorURL]!='', [deliveryProvider/@mirrorURL], GetOption('NmsServer_MirrorPageUrl')))"
+               label="Mirror page" name="mirrorURL" type="string" xml="true"/>
+
+    <attribute advanced="true" defOnDuplicate="true" desc="Key used to sign tracked email links"
+               label="Signing Key" name="signKey" type="string" visibleIf="false"/>
+    <attribute advanced="true" desc="2: arguments are encoded when signing is enabled; 3: arguments are always encoded."
+               label="Version of the scheme used for tracking links" name="emailLinksVersion"
+               type="long" visibleIf="false"/>
+
+    <attribute applicableIf="HasPackage('xxl:fullfdaMid')" desc="Name of external account"
+               label="External account name" name="extAccountName" sql="true"/>
+
+    <!-- forecast parameters (SQL fields) -->
+    <element label="Provisional planning" name="forecast" template="nms:delivery:forecastDef"
+             xml="true">
+      <attribute enum="nms:delivery:weightType" label="Weight type" name="weightType"
+                 sql="true" type="byte" xml="false"/>
+      <attribute default="5" label="Delivery weight" name="weight" sql="true" type="long"
+                 xml="false"/>
+      <element advanced="true" default="GetOption('NmsForecast_MsgWeightFormula')"
+               label="Message weight computation formula" name="weightFormula" type="string"/>
+    </element>
+
+    <element label="Capacity" name="volume">
+      <attribute default="100" desc="Handled call rate for telephone channel (0 to 100%)"
+                 label="Handled call rate (in %)" name="rate" type="double"/>
+      <attribute default="1" desc="Processing time per message for the telephone channel"
+                 label="Handled call duration for telephone channel" name="duration"
+                 type="double"/>
+      <element label="Channel capacity" name="rule" target="nms:typologyRule" type="link"
+               xml="true"/>
+      <element label="Recipient significance computation formula" name="weightFormula"
+               type="string" xml="true"/>
+    </element>
+
+    <element label="Filtering typologies" name="typologyFilter" ordered="true" unbound="true"
+             xml="true">
+      <element label="Typology" name="typology" target="nms:typology" type="link"/>
+    </element>
+    <element label="Filtering rules" name="ruleFilter" ordered="true" unbound="true"
+             xml="true">
+      <element label="Typology rule" name="rule" target="nms:typologyRule" type="link"/>
+    </element>
+
+    <!-- scheduling parameters (SQL fields) -->
+    <element label="Delivery scheduling" name="scheduling">
+      <!-- ## PF : 'scheduling' should be renamed to 'executionPlan' to avoid a misunderstanding with the forecast.
+                   WARNNING: changing that name will broke compatibility with previous deliveries & models -->
+      <attribute advanced="true" desc="Approval mode" enum="nms:delivery:validationMode"
+                 label="Approval mode" length="16" name="validationMode" type="string"/>
+      <attribute desc="Schedule delivery start." label="Schedule delivery start"
+                 name="delayed" type="boolean"/>
+      <attribute defOnDuplicate="true" desc="Start date if action is deferred or delayed, validity date otherwise."
+                 label="Contact date" name="contactDate" type="datetime"/>
+      <attribute defOnDuplicate="true" default="iif([/@isModel], '', CurrentTimeZone())"
+                 name="contactDateTimeZone" template="xtk:common:timezone" xml="true"/>
+      <attribute defOnDuplicate="true" label="Validity limit" name="validityDate"
+                 type="datetime">
+        <help>Sets the date after which messages are no longer sent. For an email message, this sets the date of the last retry, and for SMS messages, this information is forwarded to the SMS gateway.</help>
+      </attribute>
+      <attribute defOnDuplicate="true" desc="Limit validity date for delivery online resources (mirror page, images...)"
+                 label="Validity limit date for resources" name="webValidityDate"
+                 type="datetime"/> <!-- ### should also be tracking expiration ??? -->
+      <attribute advanced="true" defOnDuplicate="true" default="false" label="Online resources purged"
+                 name="webResPurged" type="boolean"/>
+      <attribute defOnDuplicate="true" desc="Extraction request date" label="Extraction request"
+                 name="extraction" type="datetime"/>
+      <attribute defOnDuplicate="true" default="0" desc="Maximum number of seconds before forced extraction"
+                 label="Extraction wait period" name="delayExtraction" type="timespan"/>
+      <attribute defOnDuplicate="true" desc="Extraction date of the file" label="Extraction date"
+                 name="extracted" type="datetime"/>
+      <attribute advanced="true" desc="Affinity to IP addresses to use during email delivery."
+                 label="IP affinity" length="64" name="IPAffinity" type="string"/>
+
+      <!-- wave management -->
+      <element label="Waves management" name="waves" xml="true">
+        <attribute desc="Send using multiple waves" label="Enabled" name="enabled"
+                   type="boolean"/>
+        <attribute desc="Waves type" enum="nms:delivery:wavesMode" label="Mode" name="mode"
+                   type="byte"/>
+        <attribute default="'20%'" desc="Number of messages in each wave." label="Waves size"
+                   length="10" name="splitSize" type="string"/>
+        <attribute default="86400" desc="Period between two waves" label="Period"
+                   name="splitDelay" type="timespan"/>
+        <element label="Calendar" name="calendar">
+          <element label="Wave" name="calendarItem" ordered="true" unbound="true">
+            <attribute desc="Delay between the start of the delivery and the start of this wave."
+                       label="Start" name="start" type="timespan"/>
+            <attribute desc="Wave size." label="Size" length="10" name="size" type="string"/>
+          </element>
+        </element>
+      </element>
+    </element>
+
+    <!-- validation : do not use agregate this is not allowed when ref is used as a agregate too -->
+    <element advanced="true" label="Approval" name="validation">
+      <attribute desc="Selected preparation mode" enum="nms:common:sandboxMode" label="Preparation mode"
+                 name="sandboxMode" sql="true" type="byte"/>
+    </element>
+
+    <!-- timing parameters -->
+    <element label="Delivery execution parameters" name="execution">
+      <help>Parameters describing dates and durations of the different delivery steps.</help>
+      <attribute defOnDuplicate="true" desc="Number of retries performed (or in progress)"
+                 label="Number of retries" name="retry" type="short"/>
+      <attribute default="GetOption('NmsEmail_RetryCount')" desc="Maximum number of retries for the delivery."
+                 label="Max. number of retries" name="maxRetry" type="short"/>
+      <attribute default="GetOption('NmsEmail_RetryPeriod')" desc="Period between two retries (in seconds)."
+                 label="Period of retries" name="retryPeriod" type="timespan"/>
+      <attribute defOnDuplicate="true" desc="Start date of the next retry (or of the current retry)"
+                 label="Next retry" name="nextPassDate" type="datetime"/>
+      <attribute defOnDuplicate="true" desc="Start date of delivery action" label="Start date"
+                 name="broadStartDate" type="datetime"/>
+      <attribute defOnDuplicate="true" desc="End date of delivery" label="End date"
+                 name="broadEndDate" type="datetime"/>
+      <attribute defOnDuplicate="true" desc="Start date of the last pass" label="Pass start"
+                 name="passStartDate" type="datetime"/>
+      <attribute defOnDuplicate="true" default="GetOption('NmsDelivery_MaxPersoTime')"
+                 desc="Maximum time the personalization phase is allowed to run per recipient (in seconds; 0: unlimited)"
+                 label="Maximum personalization run time" name="maxPersoTime" type="long"/>
+    </element>
+
+    <!-- Campaign Tyopology link -->
+    <element default="DefaultInstance('defaultTypology')" label="Typology" name="typology"
+             required="true" revDesc="Deliveries associated with this typology" revLabel="Deliveries"
+             target="nms:typology" type="link"/>
+    <!-- mapping link -->
+    <element default="LoadInstance('mapRecipient')" label="Target mapping" name="mapping"
+             revIntegrity="define" revLabel="Deliveries" target="nms:deliveryMapping"
+             type="link"/>
+
+    <!-- model parameters -->
+    <element label="Delivery template parameters" name="scenario" xml="true">
+      <help>These parameters only apply to a template and not to the delivery actions created from a template.</help>
+      <attribute label="Compute the label during delivery analysis" name="useLabelScript"
+                 type="boolean"/>
+      <element desc="Delivery label computation script" label="Label computation script"
+               name="labelScript" required="true" type="string">
+        <help>Used to specify the delivery label in the campaign. Personalization tags can be used in this attribute, but unlike other personalizable fields, they are evaluated only once during the analysis of the delivery. Information linked to recipients is therefore not accessible.</help>
+      </element>
+      <attribute label="Compute the execution folder during the delivery analysis"
+                 name="useFolderScript" type="boolean"/>
+      <element desc="Calculation script for delivery execution folder" label="Folder calculation script"
+               name="folderScript" required="true" type="string">
+        <help>Used to define in which folder the delivery is stored. This attribute accepts personalization tags, but contrary to other personalizable fields, it is evaluated only once during the delivery analysis step. Data from the recipients is then not accessible.</help>
+      </element>
+      <attribute label="Compute the delivery code during analysis" name="useDeliveryCodeScript"
+                 type="boolean"/>
+      <element label="Delivery code computation script" name="deliveryCodeScript"
+               required="true" type="string"/>
+      <attribute advanced="true" desc="Used to explicitly set limit dates for delivery, resource validity and tracking, instead of associated durations."
+                 label="Explicitly set validity dates" name="setDirectDates" type="boolean"/>
+      <attribute default="GetOption('NmsBroadcast_MsgValidityDuration')" desc="Maximum delivery duration starting at delivery validation."
+                 label="Delivery duration" name="validityDuration" type="timespan"/>
+      <attribute default="GetOption('NmsBroadcast_MsgWebValidityDuration')" desc="Validity period for delivery resources put online, starting from the delivery validation."
+                 label="Resources validity limit" name="webValidityDuration" type="timespan"/> <!-- ### should also be tracking expiration ??? -->
+      <attribute desc="Used to set the tracking validity limit date if it is not specified."
+                 label="Tracking validity limit" name="trackingDuration" type="timespan"/>
+    </element>
+
+    <!-- FCP parameters -->
+    <element advanced="true" label="Proof settings" name="fcpParameters" xml="true">
+      <attribute desc="Sequence number of Proof" label="Sequence number" name="FCPNum"
+                 type="long"/>
+      <attribute desc="Proof-target creation mode." enum="fcpMode" label="Proof mode"
+                 name="fcpMode" type="string"/>
+      <attribute desc="Prefix to add to the proof label and to the email subject"
+                 label="Label prefix" name="labelPrefix" translatedDefault="'Proof'"
+                 type="string"/>
+      <attribute enum="fcpMailFormat" label="Formats for proof messages" name="fcpMailFormat"
+                 type="string"/>
+      <attribute default="true" desc="Add format in the email subject prefix" label="Add format in subject"
+                 name="addFormatInPrefix" type="boolean"/>
+      <attribute default="false" desc="Otherwise, the delivery code of the proof remains empty"
+                 label="Keep the delivery code for the proof" name="keepDeliveryCode"
+                 type="boolean"/>
+      <attribute default="true" desc="Keep duplicate addresses (and recipients) in the proof"
+                 label="Keep doubles" name="ignoreDeduplicate" type="boolean"/>
+      <attribute default="true" desc="Keep denylisted addresses in the proof" label="Keep denylisted addresses"
+                 name="ignoreBlacklist" type="boolean"/>
+      <attribute default="false" desc="Keep addresses in quarantine in the proof"
+                 label="Keep quarantined addresses" name="ignoreQuarantaine" type="boolean"/>
+      <attribute default="false" desc="Use a specific output file for the proof"
+                 label="Specific output file" name="useSpecificOutputFile" type="boolean"/>
+      <element label="Parameters of the specific output file" name="fcpOutput">
+        <attribute desc="Download the generated file after the analysis of the delivery (otherwise generates it on the server)"
+                   label="Download the file generated from the server after the export."
+                   name="downloadDestFile" type="boolean"/>
+        <attribute desc="Name of the file exported on the server or downloaded on the client."
+                   label="Output file" name="fileName" required="true" type="string"/>
+        <element desc="Used to define the name on the server of the output file generated by the delivery."
+                 label="File name computation script" name="outputScript" required="true"
+                 type="CDATA"/>
+      </element>
+      <element desc="List of addresses for proof in substitution mode" label="Proof addresses"
+               name="substitution" unbound="true">
+        <attribute label="Substitution address" name="address" required="true" type="string"
+                   userEnum="fcpAddress"/>
+        <attribute label="Description" name="desc" type="string"/>
+        <element label="Profile" name="profile">
+          <element label="Profile" name="rcp"> <!-- structure corresponding to harcoded CXawTargetPreviewList return value -->
+            <attribute label="Profile identifier" name="key" type="string"/>
+            <attribute label="Profile to use" name="cs" translatedDefault="'Random'"
+                       type="string"/>
+          </element>
+        </element>
+      </element>
+      <element label="Seed addresses" name="seedList" xml="true">
+        <element desc="Seed list selection condition" name="where" template="xtk:queryDef:where">
+          <attribute expr="'nms:seedMember'" label="Filtering schema" name="filteringSchema"
+                     pkgStatus="always" type="string"/>
+        </element>
+        <attribute label="Filter" name="humanCond" type="string"/>
+      </element>
+    </element>
+    <element defOnDuplicate="true" label="Parent delivery" name="proofedDelivery"
+             revIntegrity="own" revLabel="Proofs" revLink="proof" revPkgStatus="never"
+             target="nms:delivery" type="link"/>
+
+    <!-- Email header -->
+    <element label="Email header parameters" name="mailParameters" xml="true">
+      <help>Email header parameters in case of an email delivery.</help>
+      <element desc="Message subject" label="Subject" localizable="true" name="subject"
+               type="CDATA"/>
+      <element default="GetOption('NmsEmail_FromName')" desc="Sender name" label="From"
+               localizable="true" name="senderName" type="CDATA"/>
+      <element dataPolicy="emailOrScript" default="GetOption('NmsEmail_DefaultFromAddr')"
+               desc="Email address of sender." label="Sender address" name="senderAddress"
+               required="true" type="CDATA"/>
+      <element dataPolicy="emailOrScript" default="GetOption('NmsEmail_DefaultReplyToAddr')"
+               desc="Reply-to email address. If not defined, the sender address will be used as reply-to address."
+               label="Reply address" name="replyAddress" required="true" type="CDATA"/>
+      <element default="GetOption('NmsEmail_ReplyToName')" label="Reply address text"
+               localizable="true" name="replyName" type="CDATA"/>
+      <element dataPolicy="emailOrScript" desc="Email address used to receive errors (mailer daemon)."
+               label="Errors-to address" name="errorAddress" type="CDATA"/>
+      <element dataPolicy="emailOrScript" desc="Address used by the inbound mail management module in order to transfer the bounces that could not been automatically processed. If not defined, the reply-to address will be used as bounce transfer address."
+               label="Bounce address" name="bounceAddress" type="CDATA"/>
+      <element advanced="true" desc="Additional SMTP headers" label="Headers" name="headers"
+               type="CDATA"/>
+
+      <attribute default="true" desc="Use the default error address defined for the platform"
+                 label="Default error address" name="useDefaultErrorAddress" type="boolean"/>
+      <attribute desc="Mirror page management parameters." enum="nms:delivery:mirrorPagePolicy"
+                 label="Mirror page management" name="mirrorPagePolicy" type="string"/>
+      <attribute defOnDuplicate="true" desc="Technical parameter indicating if the delivery uses the mirror page."
+                 enum="needMirrorPage" label="Mirror page usage" name="needMirrorPage"
+                 type="byte" xml="false"/>
+    </element>
+
+    <!-- SMS parameters -->
+    <element label="SMS parameters" name="smsParameters" xml="true">
+      <help>Parameters of the SMS message delivery.</help>
+      <attribute desc="Transmission and storage mode of SMS on mobile terminal."
+                 enum="smsMode" label="Transmission mode" name="smsMode" type="byte"/>
+      <attribute default="GetOption('NmsSMS_Priority')" desc="Information transmitted to the SMS gateway to indicate the message priority."
+                 enum="smsPriority" label="Priority" name="smsPriority" type="byte"/>
+      <attribute enum="smsAppType" label="Communication type" name="smsAppType" type="long"/>
+      <attribute enum="mobileMsgType" label="Message type" name="mobileMsgType" type="byte"/>
+      <attribute desc="Maximum number of SMS messages chained together per message (0=default, 1 for SMS and 2 for WAP Push)."
+                 label="Maximum number of SMSes per message" name="maxSmsPerMessage"
+                 type="byte"/>
+      <attribute label="Sender address" name="sourceAddress" type="string"/>
+      <attribute label="Service or program ID" name="mbloxServiceId" type="string"/>
+      <attribute desc="Indicates which application service can be linked to SMS"
+                 label="Service type" length="6" name="serviceType" type="string"/>
+      <element advanced="true" label="SMS content" localizable="true" name="smsContent"
+               type="CDATA"/>
+    </element>
+
+    <!-- Paper parameters -->
+    <element label="Direct mail parameters" name="paperParameters" xml="true">
+      <help>Parameters for direct mail deliveries.</help>
+      <element desc="Address is required when using Electronic Registered letters"
+               name="senderAddress" template="nms:common:postalAddress">
+        <attribute default="GetOption('NmsPaper_SenderLine1')" name="line1"/>
+        <attribute default="GetOption('NmsPaper_SenderLine2')" name="line2"/>
+        <attribute default="GetOption('NmsPaper_SenderLine3')" name="line3"/>
+        <attribute default="GetOption('NmsPaper_SenderLine4')" name="line4"/>
+        <attribute default="GetOption('NmsPaper_SenderLine5')" name="line5"/>
+        <attribute default="GetOption('NmsPaper_SenderLine6')" name="line6"/>
+        <attribute default="GetOption('NmsPaper_SenderLine7')" name="line7"/>
+        <attribute _operation="delete" name="addrDefined"/>
+        <attribute _operation="delete" name="addrQuality"/>
+        <attribute _operation="delete" name="addrLastCheck"/>
+        <attribute _operation="delete" name="addrErrorCount"/>
+      </element>
+      <attribute enum="colorSupport" label="Color support" name="colorSupport"/>
+      <attribute enum="rectoVerso" label="Double-sided" name="rectoVerso"/>
+      <attribute enum="envelope" label="Envelop type" name="envelope"/>
+      <attribute enum="addressPos" label="Address position" name="addressPos"/>
+      <attribute desc="Print your internal message identifier above the sender address"
+                 label="Print the internal reference" name="printInternalRef" type="boolean"/>
+      <attribute label="Electronic management of undeliverables" name="handleNPAI"
+                 type="boolean"/>
+      <attribute enum="priceCategory" label="Stamping category" name="priceCategory"/>
+      <attribute desc="Acknowledgement" label="Ack" name="AR" type="boolean"/>
+      <attribute desc="Email address to use for the electronic acknowledgement" label="Email for acknowledgements"
+                 name="emailAR"/>
+    </element>
+
+    <!-- Recipient target -->
+    <element label="Delivery target population" name="targets" xml="true">
+      <help>Delivery targets definition</help>
+      <!-- the targetMode and the mapping must be the same for all targets,
+           else the FCP wouldn't be significant -->
+      <attribute desc="Selection mode of recipients" enum="targetMode" label="Target Type"
+                 name="targetMode" pkgStatus="always" type="byte"/>
+
+      <!-- global parameters -->
+      <attribute default="GetOption('NmsBroadcast_RemoveDuplicatesRecipients')" desc="Exclude duplicate addresses during delivery"
+                 label="Deduplicate on address" name="deduplicate" type="boolean"/>
+      <attribute advanced="true" default="false" desc="Use to prevent deduplication of recipients belonging to multiple target elements."
+                 label="Keep duplicate records (same identifier)" name="noRcpIdDedup"
+                 type="boolean"/>
+      <attribute default="GetOption('NmsBroadcast_RemoveBlackList')" desc="Exclude recipients who no longer want to be contacted (denylist)."
+                 label="Exclude denylisted recipients" name="useBlackList" type="boolean"/>
+      <attribute default="1" desc="Do not send any message to recipients which address has been quarantined."
+                 label="Exclude quarantined recipients" name="useQuarantine" type="boolean"/>
+      <attribute default="3" desc="Maximum number of consecutive errors on the address to perform the delivery."
+                 label="Maximum number of consecutive errors" name="maxErrorCount"
+                 type="long"/>
+      <attribute default="1" desc="Do not deliver to recipients with low address-quality ratings."
+                 label="Exclude bad-quality addresses" name="useQuality" type="boolean"/>
+      <attribute default="3" desc="Minimum quality rating required to send to an address."
+                 enum="nms:common:addressQuality" label="Requisite quality rating"
+                 name="qualityRequired" type="long"/>
+      <attribute default="true" desc="Leave recipients with unqualified postal addresses in the target."
+                 label="Allow unqualified addresses" name="allowUnchecked" type="boolean"/>
+      <attribute desc="Limit number of recipients for this delivery action" label="Limit delivery"
+                 name="useDeliveryLimit" type="boolean"/>
+      <attribute desc="Maximum number of messages to send for this delivery" label="Limit delivery to"
+                 name="deliveryLimit" type="long"/>
+      <attribute desc="Automatically include recipients from the proof in the main target"
+                 label="Include proof target in the main target" name="addProofInTarget"
+                 type="boolean"/>
+      <attribute desc="Do not create delivery logs for recipients ignored during the analysis phase (denylists, quarantines, etc.)"
+                 label="Do not create delivery logs for ignored messages" name="skipIgnoredLogs"
+                 type="boolean"/>
+      <attribute applicableIf="HasPackage('nms:coreInteraction')" default="0" desc="Don't send messages to recipients non-eligible to the offers from the delivery outline or for which the offer engine has not generated the expected number of propositions."
+                 label="Exclude non-eligible recipients" name="excludeOnMissingOffer"
+                 type="boolean"/>
+      <attribute applicableIf="HasPackage('nms:coreInteraction') OR HasPackage('nms:midReceiver')"
+                 label="Do not display anything if no offers are selected." name="emptyReprForMissingOffer"
+                 type="boolean"/>
+
+      <!-- targets definitions for 'database' mode -->
+      <attribute advanced="true" desc="Expression to sort the messages to send; based on the tmpBroadcastXxx working schema. This isn't the message delivery sequence."
+                 label="Message preparation sequence" name="orderByExpr"/>
+      <attribute advanced="true" expr="[../mapping/@schema]" label="Filtering schema"
+                 name="filteringSchema" pkgStatus="always" type="string"/>
+      <element label="Delivery target population" name="deliveryTarget" ref="target"/>
+      <element label="Proof target" name="proofTarget" ref="target"/>
+      <attribute desc="Overrides the mapping computation formula." label="External identifier"
+                 name="externalId" type="string"/>
+      <!-- target for 'file' mode -->
+      <element label="Format of the file associated with the delivery target" name="fileFormat"
+               ref="xtk:dataTransfer:dataTransfer/dataTransferStep"/>
+      <element label="Delivery target population" name="deliveryFile" ref="targetFile"/>
+      <element label="Proof target" name="proofFile" ref="targetFile"/>
+      <attribute default="'__db__'" desc="Field containing the address of the recipient."
+                 label="Address field" name="addressField" required="true" type="string"/>
+      <attribute default="'__db__'" desc="Field containing an external identifier of the recipient."
+                 label="External identifier field" name="externalIdField" type="string"/>
+      <attribute default="'__db__'" desc="Field containing the segment code of the recipient."
+                 label="Segment code field" name="segmentCodeField" type="string"/>
+      <attribute default="'__db__'" desc="Field specifying if the recipient is denylisted."
+                 label="Denylist field" name="blackListField" type="string"/>
+      <attribute default="'__db__'" desc="Field containing the email format to use for the recipient."
+                 label="Format field" name="formatField" type="string"/>
+      <element label="Fields from the postal address" name="postalAddress">
+        <attribute default="'__db__'" desc="Field containing the first line of the postal address."
+                   label="Line 1" name="line1Field" required="true" type="string"/>
+        <attribute default="'__db__'" desc="Field containing the second line of the postal address."
+                   label="Line 2" name="line2Field" required="true" type="string"/>
+        <attribute default="'__db__'" desc="Field containing the third line of the postal address."
+                   label="Line 3" name="line3Field" required="true" type="string"/>
+        <attribute default="'__db__'" desc="Field containing the fourth line of the postal address."
+                   label="Line 4" name="line4Field" required="true" type="string"/>
+        <attribute default="'__db__'" desc="Field containing the fifth line of the postal address."
+                   label="Line 5" name="line5Field" required="true" type="string"/>
+        <attribute default="'__db__'" desc="Field containing the sixth line of the postal address."
+                   label="Line 6" name="line6Field" required="true" type="string"/>
+        <attribute default="'__db__'" desc="Field containing the seventh line of the postal address."
+                   label="Line 7" name="line7Field" required="true" type="string"/>
+        <attribute default="'__none__'" desc="Field indicating whether the postal address is populated."
+                   label="Address specified" name="addrDefinedField" type="string"/>
+        <attribute default="'__none__'" desc="Field containing the address quality rating."
+                   label="Quality rating" name="addrQualityField" type="string"/>
+        <attribute default="'__none__'" desc="Field containing the last qualification of the address."
+                   label="Last qualification" name="addrLastCheckField" type="string"/>
+        <attribute default="'__none__'" desc="Field containing the number of consecutive errors when sending to this address."
+                   label="Number of errors" name="addrErrorCountField" type="string"/>
+      </element>
+
+      <attribute default="false" desc="Do not import the recipients into the database"
+                 label="No reconciliation" name="noReconciliation" type="boolean"/>
+      <attribute default="false" label="Delivery from an external source" name="fromExternalSource"
+                 type="boolean"/>
+      <element label="Content of the external source" name="externalSource" type="CDATA"/>
+
+      <!-- target for 'address' mode -->
+      <attribute desc="Address list of message recipients. The addresses must be separated by a semi-column ';'."
+                 label="Recipients" name="recipientList" type="string"/>
+    </element>
+
+    <!-- Interaction -->
+    <attribute advanced="true" applicableIf="HasPackage('nms:coreInteraction')" defOnDuplicate="true"
+               default="false" label="Use the offers associated with the target"
+               name="useTargetOffers" type="boolean" xml="true"/>
+    <element applicableIf="HasPackage('nms:coreInteraction')" label="Offer space"
+             name="offerSpace" target="nms:offerSpace" type="link"/>
+    <element applicableIf="HasPackage('nms:coreInteraction')" label="Category" name="offerCategory"
+             target="nms:offerCategory" type="link"/>
+    <element applicableIf="HasPackage('nms:coreInteraction')" label="Anonymous category"
+             name="offerAnonymousCategory" target="nms:offerCategory" type="link"/>
+    <attribute applicableIf="HasPackage('nms:coreInteraction')" desc="Comma-separated list of selected themes."
+               label="Themes" length="64" name="offerThemes" type="string" xml="true"/>
+    <attribute applicableIf="HasPackage('nms:coreInteraction')" default="1" label="Number of propositions per message"
+               name="maxPropositionCount" type="long" xml="true"/>
+
+    <!-- Lead -->
+    <element applicableIf="HasPackage('crm:lead')" label="Landing page" name="landingPage"
+             target="crm:landingPage" type="link"/>
+
+    <!-- AEM -->
+    <element applicableIf="HasPackage('nms:aemIntegration')" label="Parameters for remote content"
+             name="remoteContent" xml="true">
+      <attribute label="Path" name="remotePath" type="string"/>
+      <attribute label="Label" name="remoteLabel" type="string"/>
+      <attribute label="Last synchronized" name="lastSync" type="datetime"/>
+      <attribute default="false" label="Content approved" name="remoteValidation"
+                 type="boolean"/>
+    </element>
+    <!-- external account in SQL for integrity -->
+    <element applicableIf="HasPackage('nms:aemIntegration')" label="AEM account"
+             name="cmsAccount" target="nms:extAccount" type="link">
+      <sysFilter>
+        <condition expr="EVal([aemInstance/@type], 'aem')"/>
+      </sysFilter>
+    </element>
+
+    <!-- Content -->
+    <element label="Content" name="content" xml="true">
+      <attribute desc="Message format selection method" enum="formatSelection" label="Format choice"
+                 name="formatSelection" type="string"/>
+      <attribute default="false" desc="Compressing HTML documents can reduce the size of sent messages and reduce the time required for delivery"
+                 label="HTML compression" name="htmlCompression" type="boolean"/>
+      <attribute default="false" desc="Ignore personalization scripts when delivering."
+                 label="Ignore scripts" name="ignoreScripts" type="boolean"/>
+      <element label="HTML content" name="html" ref="contentDef"/>
+      <element applicableIf="HasPackage('nms:amp')" label="AMP content" name="htmlamp"
+               ref="contentDef"/>
+      <element label="Text content" name="text" ref="contentDef"/>
+      <element label="MMS content" name="mms" ref="contentDef"/>
+      <element label="SMS content" name="sms" ref="contentDef"/>
+
+      <!-- Content for iOS push notification -->
+      <element default="0" label="iOS content (alert style)" name="iosNotifType"
+               ref="contentDef"/>
+      <element label="iOS content (title)" name="iosTitle" ref="contentDef"/>
+      <element label="iOS content (subtitle)" name="iosSubTitle" ref="contentDef"/>
+      <element label="iOS content (badge)" name="iosBadge" ref="contentDef"/>
+      <element label="iOS content (sound)" name="iosSound" ref="contentDef"/>
+      <element label="iOS content (mutable)" name="iosMutable" ref="contentDef"/>
+      <element label="iOS content (category)" name="iosCategory" ref="contentDef"/>
+      <element label="iOS content (message)" name="iosMessage" ref="contentDef"/>
+      <element label="iOS content (label of the action button)" name="iosActionLocKey"
+               ref="contentDef"/>
+      <element label="iOS content (thread-id)" name="iosThreadId" ref="contentDef"/>
+      <element label="iOS content (hide action button)" name="iosHideActionBtn" ref="contentDef"/>
+      <element label="iOS content (used to indicate form support timesensitive notif)"
+               name="iosIsTsnSupported" ref="contentDef"/>
+      <element default="false" label="iOS content (clean badge)" name="iosCleanBadge"
+               ref="contentDef"/>
+      <element default="false" label="iOS content (critical alert)" name="iosCriticalAlertMode"
+               ref="contentDef"/>
+      <element label="iOS content (critical alert volume)" name="iosCriticalAlertVolume"
+               ref="contentDef"/>
+      <element label="iOS content (target-content-id)" name="iosTargetContentId"
+               ref="contentDef"/>
+      <element label="iOS content (launch image)" name="iosLaunchImage" ref="contentDef"/>
+      <element label="iOS content (interruption level)" name="iosInterruptionLevel"
+               ref="contentDef"/>
+      <element label="iOS content (relevance score)" name="iosRelevanceScore" ref="contentDef"/>
+      <element advanced="true" label="iOS content (checking and loading iOS push settings)"
+               name="iosCheckParams" ref="contentDef"/>
+      <element label="iOS content (personalized notification fields)" name="iosCustomFields"
+               template="contentDef">
+        <element name="source" type="ANY"/><!-- Force type to ANY to be able to identify this particular source element and provide an XML serialization -->
+      </element>
+      <element label="iOS content (sounds available in the selected application)"
+               name="iosAvailableSounds" template="contentDef">
+        <element name="source" type="ANY"/><!-- Force type to ANY to be able to identify this particular source element and provide an XML serialization -->
+      </element>
+
+      <!-- Content for Android push notification -->
+      <element default="0" label="Android content (message type)" name="androidMessageType"
+               ref="contentDef"/>
+      <element label="Android content (message)" name="androidMessage" ref="contentDef"/>
+      <element label="Android content (title)" name="androidTitle" ref="contentDef"/>
+      <element label="Android content (channel id)" name="androidChannelId" ref="contentDef"/>
+      <element label="Android content (icon)" name="androidIcon" ref="contentDef"/>
+      <element label="Android content (sound)" name="androidSound" ref="contentDef"/>
+      <element label="Android content (tag)" name="androidTag" ref="contentDef"/>
+      <element label="Android content (color)" name="androidColor" ref="contentDef"/>
+      <element label="Android content (ticker)" name="androidTicker" ref="contentDef"/>
+      <element label="Android content (sticky)" name="androidSticky" ref="contentDef"/>
+      <element label="Android content (visibility)" name="androidVisibility" ref="contentDef"/>
+      <element label="Android content (notification priority)" name="androidNotificationPriority"
+               ref="contentDef"/>
+      <element label="Android content (notification count)" name="androidNotificationCount"
+               ref="contentDef"/>
+      <element label="Android content (image)" name="androidImage" ref="contentDef"/>
+      <element label="Android content (click Action)" name="androidClickAction" ref="contentDef"/>
+      <element label="Android content (linked service ID)" name="androidService"
+               ref="contentDef"/>
+      <element advanced="true" label="Android content (checking and loading Android push settings)"
+               name="androidCheckParams" ref="contentDef"/>
+      <element label="Android content (personalized notification fields)" name="androidCustomFields"
+               template="contentDef">
+        <element name="source" type="ANY"/><!-- Force type to ANY to be able to identify this particular source element and provide an XML serialization -->
+      </element>
+      <element label="Android content (collapse key)" name="androidCollapseKey" ref="contentDef"/>
+
+      <!-- Content for LINE message -->
+      <element label="LINE content (Type)" name="lineContentType" template="contentDef">
+        <element enum="lineContentType" localizable="false" name="source"/>
+      </element>
+      <element label="Line Version" name="lineVersion" template="contentDef">
+        <element enum="lineVersion" localizable="false" name="source"/>
+      </element>
+      <element label="LINE Delivery Type" name="lineDeliveryType" template="contentDef">
+        <element enum="lineDeliveryType" localizable="false" name="source"/>
+      </element>
+      <element label="LINE content (Message)" name="lineMessage" template="contentDef"/>
+      <element label="Image input type" name="lineImageType" template="contentDef">
+        <element enum="lineImageType" localizable="false" name="source"/>
+      </element>
+      <element description="Custom URL of the LINE image" label="LINE content (Image)"
+               name="lineImage" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="Image URL (240)" name="lineImageUrl1" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="Image URL (300)" name="lineImageUrl2" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="Image URL (460)" name="lineImageUrl3" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="Image URL (700)" name="lineImageUrl4" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="Image URL (1040)" name="lineImageUrl5" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="Video Preview Image URL" name="lineVideoPreviewImageUrl" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="Video URL" name="lineVideoUrl" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element advanced="true" label="LINE content (Access token)" name="lineAccessToken"
+               template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element advanced="true" label="LINE reply token" name="lineReplyToken" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element advanced="true" label="LINE content (NMS LINE AES Key)" name="lineNmsAesKey"
+               template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element advanced="true" label="LINE content (NMS Server URL)" name="lineNmsServerUrl"
+               template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="LINE content (Alternative text)" name="lineImageText" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="LINE content (Web link)" name="lineWebLink" template="contentDef"/>
+      <element label="LINE content (Image size in pixels)" name="lineImageLength"
+               template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="LINE content (Image size in pixels)" name="lineImageHeight"
+               template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'never')"
+                   name="trackingType" xml="true"/>
+      </element>
+      <element label="Layout Type of Multi-region Image" name="lineMultiRegionLayoutType"
+               template="contentDef">
+        <element enum="lineMultiRegionLayoutType" localizable="false" name="source"/>
+      </element>
+      <element label="LINE content (web link) A" name="lineWebLinkA" template="contentDef"/>
+      <element label="LINE content (web link) B" name="lineWebLinkB" template="contentDef"/>
+      <element label="LINE content (web link) C" name="lineWebLinkC" template="contentDef"/>
+      <element label="LINE content (web link) D" name="lineWebLinkD" template="contentDef"/>
+      <element label="LINE content (web link) E" name="lineWebLinkE" template="contentDef"/>
+      <element label="LINE content (web link) F" name="lineWebLinkF" template="contentDef"/>
+       <!-- Adding for preview Imgae-->
+      <element label="LINE preview (Message)" name="linePreview" template="contentDef"/>
+
+       <!-- Adding this for multi-msg-->
+      <element applicableIf="HasPackage('nms:lineV2')" label="LINE content" name="lineCustomFields"
+               template="contentDef" xml="true">
+        <element name="source" type="ANY" xml="true"/><!-- Force type to ANY to be able to identify this particular source element and provide an XML serialization -->
+      </element>
+
+      <!-- Sounds are not used for now. Need update in the connector -->
+      <element label="Android content (sounds available in the selected application)"
+               name="androidAvailableSounds" template="contentDef">
+        <element name="source" type="ANY"/><!-- Force type to ANY to be able to identify this particular source element and provide an XML serialization -->
+      </element>
+      <!-- Content for Social Marketing channels -->
+      <!-- DO NOT USE applicableIf otherwise contents will not be shared with MTA -->
+      <attribute enum="fcbContentType" label="Type of Facebook content" name="fcbContentType"
+                 type="byte"/>
+      <element label="Facebook content (type)" name="facebookContentType" ref="contentDef"/>
+      <!-- Status -->
+      <element label="Facebook content (message)" name="facebookMessage" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'no')" name="trackingType"
+                   xml="true"/>
+      </element>
+      <!-- Link -->
+      <element label="Facebook content (http link)" name="facebookLink" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@urlType', 'facebookLink')"
+                   name="urlType" xml="true"/>
+      </element>
+      <element label="Facebook content (image link)" name="facebookPicture" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'no')" name="trackingType"
+                   xml="true"/>
+      </element>
+      <element label="Facebook content (name)" name="facebookName" ref="contentDef"/>
+      <element label="Facebook content (title)" name="facebookCaption" ref="contentDef"/>
+      <element label="Facebook content (description)" name="facebookDescription"
+               template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'no')" name="trackingType"
+                   xml="true"/>
+      </element>
+      <!-- Youtube link -->
+      <element label="Facebook content (video code)" name="facebookVideoCode" ref="contentDef"/>
+      <!-- Album photo -->
+      <element label="Facebook content (album name)" name="facebookAlbumName" ref="contentDef"/>
+      <element label="Facebook content (album description)" name="facebookAlbumDesc"
+               template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@trackingType', 'no')" name="trackingType"
+                   xml="true"/>
+      </element>
+      <!-- Targeting options belongs to the content section because they are parameters of the API call -->
+      <element label="Facebook audience (country)" name="facebookCountries" ref="contentDef"/>
+      <element label="Facebook audience (cities)" name="facebookCities" ref="contentDef"/>
+      <element label="Facebook audience (regions)" name="facebookRegions" ref="contentDef"/>
+      <element label="Facebook audience (languages)" name="facebookLocales" ref="contentDef"/>
+      <!-- Privacy options belongs to the content section because they are parameters of the API call -->
+      <element label="Facebook audience (privacy)" name="facebookPrivacy" ref="contentDef"/>
+      <!-- Action options belongs to the content section because they are parameters of the API call -->
+      <element label="Facebook content (Action name)" name="facebookActionName" ref="contentDef"/>
+      <element label="Facebook content (Action link)" name="facebookActionLink" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@urlType', 'facebookAction')"
+                   name="urlType" xml="true"/>
+      </element>
+      <!-- Contents needed for a Tweet -->
+      <element label="X (Twitter) content (X Post)" name="twitterMsg" template="contentDef">
+        <attribute expr="EVal('nms:delivery:contentDef/@urlType', 'twitterLink')"
+                   name="urlType" xml="true"/>
+      </element>
+      <element advanced="true" label="Application key" name="twitterConsumerKey"
+               ref="contentDef"/>
+      <element advanced="true" label="Application secret" name="twitterConsumerSecret"
+               ref="contentDef"/>
+      <element advanced="true" label="Access token" name="twitterAccessToken" ref="contentDef"/>
+      <element advanced="true" label="Access token secret" name="twitterAccessTokenSecret"
+               ref="contentDef"/>
+      <element advanced="true" label="Service name" name="twitterServiceName" ref="contentDef"/>
+
+      <attribute desc="Indicates whether Adobe Campaign should make the images available online."
+                 label="Upload images" name="uploadImages" type="boolean"/>
+      <attribute default="false" desc="Internal status allowing Adobe Campaign to dynamically enable the inclusion of the images."
+                 label="Automatically include images" name="embedImages" type="boolean"/>
+      <attribute default="false" desc="Flag to check if images are published." label="True if images are published"
+                 name="IsImagePublished" type="boolean"/>
+      <attribute label="Images URL" name="publicURL" type="string"/>
+      <attribute desc="Indicates whether Adobe Campaign should include the images in the email."
+                 label="Include the images in the email (multipart related)" name="multipartRelated"
+                 type="boolean"/>
+      <attribute desc="Indicates whether any PDF content is associated with this delivery."
+                 label="Add PDF content" name="hasPdf" type="boolean"/>
+      <attribute default="true" desc="The PDF compression reduces the size of the files to send."
+                 label="PDF Compression" name="pdfCompression" type="boolean"/>
+      <attribute desc="Indicates whether you want to specify one or more PDF content files for this delivery."
+                 enum="paperContentType" label="Content type" name="pdfType" type="string"/>
+      <element desc="OpenOffice files for PDF generation" label="PDF content" name="pdf"
+               ordered="true" template="xtk:common:fileToUpload" unbound="true">
+        <compute-string expr="@label"/>
+        <attribute default="true" desc="Activate generation of this PDF" label="Activate"
+                   name="active" type="boolean"/>
+        <attribute desc="File label" name="label" template="xtk:common:label"/>
+        <attribute advanced="true" desc="File size in bytes (0 if the size is not known)."
+                   label="Size in bytes" name="size" type="long"/>
+        <attribute desc="Compression mode" enum="compressMode" label="Compression"
+                   length="16" name="compressMode" type="string"/>
+        <!-- filtering recipients recieving the attachment -->
+        <attribute default="false" desc="Enable filtering of the recipients who will receive the PDF"
+                   label="Filter" name="filterActive" type="boolean"/>
+        <element desc="Script determining whether each recipient should receive the PDF"
+                 label="Filtering script" name="filterScript" type="CDATA"/>
+      </element>
+
+      <!-- list of custom fields -->
+      <element advanced="true" desc="Definition of the personalization context" name="scriptContext"
+               ref="xtk:scriptContext:scriptContext"/>
+      <element advanced="true" label="Recipient information to load" name="customRecipient"
+               ref="customization"/> <!-- should be called customRecipientLink but we must keep it for compatibility with scenarios created before -->
+      <element advanced="true" label="Data to load about the target" name="customTarget"
+               ref="customization"/>
+      <element advanced="true" label="Pre-calculated target information" name="customExtention"
+               ref="customization"/>
+      <element advanced="true" applicableIf="HasPackage('nms:coupon')" label="Information on the coupons to load"
+               name="extraCoupon">
+        <element label="Information to load" name="custom" ref="customization"/> <!-- historic structure which can't be changed for compatibility -->
+      </element>
+
+      <!-- extra script objects -->
+      <attribute desc="Add objects in the execution context of the scripts" label="Add script objects"
+                 name="addExtraObject" type="boolean"/>
+      <element label="Extra objects in the script context" name="extraObject" ordered="true"
+               unbound="true">
+        <attribute label="Object schema" name="schema" required="true" type="string"/>
+        <attribute default="'/'" label="Initial path" name="startPath" type="string"/>
+        <attribute desc="Name of the associated JavaScript object" label="JavaScript name"
+                   name="jsName" required="true" type="string"/>
+        <attribute desc="Generate a JavaScript table" label="Table" name="array"
+                   type="boolean"/>
+        <element label="Information to load" name="custom" ref="customization"/>
+        <element name="where" template="xtk:queryDef:where">
+          <attribute expr="[../@schema]" label="Filtering schema" name="filteringSchema"
+                     pkgStatus="always" type="string"/>
+        </element>
+        <element name="orderBy" ref="xtk:queryDef:orderBy"/>
+        <attribute desc="Limit the number of records to retrieve" label="Limit the line count"
+                   name="useLineCount" type="boolean"/>
+        <attribute default="3" desc="Maximum number of records to retrieve" label="Line count limit"
+                   name="lineCount" type="long"/>
+      </element>
+
+      <!-- contents for pre-process  -->
+      <element advanced="true" defOnDuplicate="true" label="Preprocessing data" name="material">
+        <element label="Preprocessing component" name="materialItem" unbound="true">
+          <!-- The id of the material is type|name[|mode[|entityKey[|codepage]]]
+               where type      : type of material (option, includeView, urlFile, webForm, extraObject or special)
+                     name      : is the name of the item
+                     mode      : context (text, html or pdf)
+                     entityKey : other identifier of the entity (ex: url source)
+                     codepage  : codepage of the content loaded (necessary for url only)
+               Examples :  option|NmsServer_URL|text
+                           includeView|UnsubscriptionLink|html
+                           urlFile||html|http://www.neolane.com|1252
+                           webForm|FRM3|html
+                           extraObject|myExtraObject
+                    smsParameters       special|provider
+            -->
+          <key name="id">
+            <keyfield xpath="@id"/>
+          </key>
+          <attribute label="Component identifier" name="id" type="string"/>
+          <attribute label="Do not escape the content" name="noEscaping" type="boolean"/>
+          <element desc="Content at the time of analysis if the component is of 'text' type"
+                   label="Text content" name="dataString" type="CDATA"/>
+          <element desc="Content at the time of analysis if the component is of 'XML' type"
+                   label="XML content" name="dataXml" type="ANY"/>
+        </element>
+      </element>
+
+    </element>
+
+    <element applicableIf="HasPackage('ncm:content')" label="Publication template"
+             name="publishing" revIntegrity="define" target="ncm:publishing" type="link"/>
+    <element name="content">
+      <element applicableIf="HasPackage('ncm:content')" label="Content" name="content"
+               type="ANY"/>
+    </element>
+
+    <!-- Output files and feedback definitions -->
+    <element label="Output files" name="output" xml="true">
+      <help>Definition of the output files (for an 'external' delivery)</help>
+      <!-- Seed list -->
+      <element name="seedList" template="nms:common:seedList"/>
+      <!-- When export file is downloaded, fileName holds the local file name (constant). outputScript is ignored.
+           When export file remains on server, the file name on server is calculated from outputScript.  -->
+      <attribute desc="Download the generated file after the analysis of the delivery (otherwise generates it on the server)"
+                 label="Download the file generated from the server after the export."
+                 name="downloadDestFile" type="boolean"/>
+      <attribute desc="Name of the file exported on the server or downloaded on the client."
+                 label="Output file" name="fileName" required="true" type="string"/>
+      <element desc="Used to define the name on the server of the output file generated by the delivery."
+               label="File name computation script" name="outputScript" type="CDATA"/>
+      <element label="Extraction definition" name="extraction" xml="true">
+        <element name="source" ref="xtk:dataTransfer:source"/>
+        <element name="destination" ref="xtk:dataTransfer:destination"/>
+      </element>
+      <attribute enum="feedbackMode" label="Retrieval mode" name="feedbackMode" type="string"/>
+      <element desc="Configuration of results and behaviors gathered after delivery."
+               label="Results and behaviors after delivery" name="urlConfig" ref="urlConfig"/>
+    </element>
+
+    <!-- tracking definition  -->
+    <element label="Tracking parameters" name="tracking" xml="true">
+      <help>Tracking parameters definition (for an email delivery)</help>
+      <attribute default="true" label="Activate tracking" name="enabled" pkgStatus="always"
+                 type="boolean"/>
+      <attribute default="true" desc="Activate the tracking of message opening."
+                 label="Opens tracking" name="openEnabled" pkgStatus="always" type="boolean"/>
+      <attribute desc="Expiration date. Sets the date after which redirection is no longer performed."
+                 label="Validity limit" name="expiration" type="datetime"/>
+      <attribute desc="URL of Web page used by the redirection server when destination URLs have expired."
+                 label="Substitution URL for expired URLs" name="errorUrl" type="string"/>
+      <element advanced="true" default="'&lt;%@ include option=\'NmsTracking_ClickFormula\' %&gt;'"
+               desc="JavaScript code defining the URL to use for the tracking of recipient clicks. Using this element allows to apply any patching formula to the URL contained in the sent messages. If you already have our own tracking system, you can customize the tracking formula in order to reuse our existing system."
+               label="Clicks tracking formula" name="clickFormula" type="CDATA"/>
+      <element advanced="true" desc="JavaScript Code for defining the URL to be used for recipient click tracking."
+               label="Click tracking formula to be used when the delivery is executed"
+               name="rtClickFormula" type="CDATA"/>
+      <element advanced="true" default="'&lt;%@ include option=\'NmsTracking_OpenFormula\' %&gt;'"
+               desc="JavaScript code defining the URL to use for the open detection of the HTML messages. Using this element allows you to add any text at the end of the messages sent to the recipients. If you already have our own tracking system, you can customize the tracking formula in order to reuse our existing system."
+               label="Opens tracking formula" name="openFormula" type="CDATA"/>
+    </element>
+
+    <!-- Advanced parameters -->
+    <element label="Advanced parameters" name="advancedParameters" xml="true">
+      <help>Advanced delivery parameters</help>
+      <attribute default="false" label="Start job in a detached process" name="outOfProcessMode"
+                 type="boolean"/>
+      <attribute advanced="true" default="false" label="Prepare the personalization data with a workflow"
+                 name="useDataManagement" type="boolean"/>
+      <attribute advanced="true" default="false" label="Prepare the delivery parts in the database"
+                 name="useDBPreparation" type="boolean"/>
+      <attribute advanced="true" default="0" label="Mode of DB prep (STRING:0, XML:1)"
+                 name="DBPreparationMode" type="long"/>
+      <attribute defOnDuplicate="true" desc="Number of messages per delivery part"
+                 label="Message batch quantity" name="splitValue" type="long">
+        <help>Number of message per delivery job part. In order to limit the number of records in the database and allow load balancing during delivery, delivery actions are split into parts. This parameter is used to define the number of messages in each part.</help>
+      </attribute>
+      <attribute default="false" desc="Does not perform the delivery for real, stops just before validating the messages at the SMTP level"
+                 label="Test SMTP delivery" name="verifyMode" type="boolean"/>
+      <attribute advanced="true" default="false" desc="Log SQL queries generated during the analysis in the journal"
+                 label="Log SQL queries in the journal" name="showSQL" type="boolean"/>
+      <attribute default="false" desc="Force the encoding used for messages" label="Force encoding"
+                 name="forceCodepage" pkgStatus="always" type="boolean"/>
+      <attribute desc="Character encoding" enum="codepage" label="Encoding" name="codepage"
+                 type="long"/>
+      <attribute default="false" desc="Sends a copy of these delivery emails to BCC email address"
+                 label="Email BCC" name="emailArchiving" type="boolean"/>
+    </element>
+
+    <!-- reporting indicators -->
+    <element defOnDuplicate="true" desc="Consolidated indicators computed for the reporting"
+             label="Indicators" name="indicators">
+
+      <attribute desc="Indicators are to be updated" enum="dirtyFlags" label="Update"
+                 name="dirty" type="byte"/>
+      <attribute desc="Last calculation date of the error breakdowns" label="Error update"
+                 name="lastErrorComputation" type="datetime"/>
+      <attribute desc="Number of errors that have yet to be qualified" label="Unqualified errors"
+                 name="errorPending" type="long"/>
+      <attribute desc="Last calculation date of the tracking indicators" label="Tracking update"
+                 name="lastTrackingComputation" type="datetime"/>
+      <attribute desc="Number of tracking logs not taken into account in the indicators"
+                 label="Tracking not taken into account" name="trackingPending" type="long"/>
+
+      <attribute desc="Number of processed messages" label="Processed" name="processed"
+                 type="long"/>
+      <attribute desc="Number of messages sent" label="Sent" name="sent" type="long"/>
+      <attribute desc="Number of messages successfully processed" label="Success"
+                 name="success" type="long"/>
+      <attribute label="Success excluding seed addresses" name="successWithoutSeeds"
+                 type="long"/>
+
+      <!-- errors -->
+      <attribute desc="Number of errors" label="Errors" name="error" type="long"/>
+      <attribute desc="Number of recipients put in quarantine" label="New quarantines"
+                 name="newQuarantine" type="long"/>
+      <attribute desc="Number of errors of type user unknown" label="Unknown users"
+                 name="unknownUser" type="long"/>
+      <attribute desc="Number of errors of type invalid domain" label="Invalid domains"
+                 name="invalidDomain" type="long"/>
+      <attribute desc="Number of errors of type unreachable" label="Unreachables"
+                 name="unreachable" type="long"/>
+      <attribute desc="Number of disabled-account type errors" label="Deactivated accounts"
+                 name="disabled" type="long"/>
+      <attribute desc="Number of errors of type mailbox full" label="Mailbox full"
+                 name="mailboxFull" type="long"/>
+      <attribute desc="Number of errors of type not connected (or not on network)"
+                 label="Not connected" name="notConnected" type="long"/>
+      <attribute desc="Number message-refused type errors" label="Refused" name="refused"
+                 type="long"/>
+
+      <!-- tracking -->
+      <attribute desc="Number of distinct recipients who have opened the mail" label="Recipients who have opened"
+                 name="recipientOpen" type="long"/>
+      <attribute desc="Total count of opens" label="Total count of opens" name="totalRecipientOpen"
+                 type="long"/>
+      <attribute desc="Count of distinct persons who have clicked on at least one URL in the mail"
+                 label="Persons who have clicked" name="personClick" type="long"/>
+      <attribute desc="Distinct number of clicks by recipients (same recipient clicks twice, counted once)"
+                 label="Number of distinct clicks" name="recipientClick" type="long"/>
+      <attribute desc="Overall total of clicks by recipients (same recipient clicks twice, counted twice)"
+                 label="Total number of clicks" name="totalRecipientClick" type="long"/>
+      <attribute desc="Count of recipients to whom the email has been forwarded"
+                 label="Number of forwards" name="forward" type="long"/>
+      <attribute desc="Total count of clicks on the mirror page link" label="Mirror page"
+                 name="mirrorPage" type="long"/>
+      <attribute desc="Total count of clicks on the unsubscription link" label="Opt-Out"
+                 name="optOut" type="long"/>
+
+      <!-- webTracking -->
+      <attribute desc="Number of transactions" label="Transactions" name="transaction"
+                 type="long"/>
+      <attribute desc="Total amount of transactions" label="Amount" name="amount"
+                 type="double"/>
+      <attribute desc="Total number of articles" label="Articles" name="article"
+                 type="long"/>
+      <attribute desc="Number of distinct pages visited (distinct clicks on web tracking URLs)"
+                 label="Distinct pages visited" name="webPage" type="long"/>
+      <attribute desc="Total count of visited pages" label="Visited pages" name="totalWebPage"
+                 type="long"/>
+
+      <!-- All the following indicators are computed expressions-->
+
+      <attribute expr="Percent(@processed, [../properties/@toDeliver])" label="Processed ratio"
+                 name="processedRatio" type="double"/>
+      <attribute expr="Percent(@success, @processed)" label="Success ratio" name="successRatio"
+                 type="double"/>
+      <attribute expr="Percent(@error, @processed)" label="Error rate" name="errorRatio"
+                 type="double"/>
+      <attribute expr="Percent(@newQuarantine, @processed)" label="New quarantines ratio"
+                 name="newQuarantineRatio" type="double"/>
+
+      <attribute advanced="true" expr="@unknownUser + @invalidDomain + @unreachable + @disabled + @mailboxFull + @notConnected + @refused"
+                 label="Errors (real time value)" name="errorSum" type="long"/>
+      <attribute expr="Percent(@unknownUser, @errorSum)" label="Unknown user rate"
+                 name="unknownUserRatio" type="double"/>
+      <attribute expr="Percent(@invalidDomain, @errorSum)" label="Invalid domain ratio"
+                 name="invalidDomainRatio" type="double"/>
+      <attribute expr="Percent(@unreachable, @errorSum)" label="Unreachable rate"
+                 name="unreachableRatio" type="double"/>
+      <attribute expr="Percent(@disabled, @errorSum)" label="Disabled account ratio"
+                 name="disabledRatio" type="double"/>
+      <attribute expr="Percent(@mailboxFull, @errorSum)" label="Mailbox full ratio"
+                 name="mailboxFullRatio" type="double"/>
+      <attribute expr="Percent(@notConnected, @errorSum)" label="Not connected ratio"
+                 name="notConnectedRatio" type="double"/>
+      <attribute expr="Percent(@refused, @errorSum)" label="Refused ratio" name="refusedRatio"
+                 type="double"/>
+      <attribute expr="Percent(@errorPending, @error)" label="Rate of unqualified errors"
+                 name="errorPendingRatio" type="double"/>
+
+      <!-- estimated open -->
+      <attribute desc="Estimation of the distinct opens, taking into account the proportion of text mails sent"
+                 expr="Iif(([../properties/@toDeliver] - [../properties/@text]) &lt;= 0, 0, round(toDouble(@recipientOpen) * [../properties/@toDeliver] / ([../properties/@toDeliver] - [../properties/@text]), 0))"
+                 label="Estimation of the number of recipients who have opened" name="estimatedRecipientOpen"
+                 type="long"/>
+      <attribute desc="Estimation of the distinct opens ratio, taking into account the proportion of text mails sent"
+                 expr="Percent(@estimatedRecipientOpen, @successWithoutSeeds)" label="Estimation of the distinct opens ratio"
+                 name="estimatedRecipientOpenRatio" type="double"/>
+      <attribute desc="Estimation of the total opens, taking into account the proportion of text mails sent"
+                 expr="Iif(([../properties/@toDeliver] - [../properties/@text]) &lt;= 0, 0, round(toDouble(@totalRecipientOpen) * [../properties/@toDeliver] / ([../properties/@toDeliver] - [../properties/@text]), 0))"
+                 label="Estimation of the total opens count" name="estimatedTotalRecipientOpen"
+                 type="long"/>
+      <attribute desc="Estimation of the total opens ratio, taking into account the proportion of text mails sent"
+                 expr="Percent(@estimatedTotalRecipientOpen, @successWithoutSeeds)"
+                 label="Estimation of the total opens ratio" name="estimatedTotalRecipientOpenRatio"
+                 type="double"/>
+
+      <attribute expr="Percent(@recipientClick, @successWithoutSeeds)" label="Click rate"
+                 name="recipientClickRatio" type="double"/>
+      <attribute desc="Transfer rate estimation" expr="Percent(@forward, @successWithoutSeeds)"
+                 label="Transfer ratio" name="forwardRatio" type="double"/>
+      <attribute expr="Percent(@optOut, @successWithoutSeeds)" label="Unsubscription ratio"
+                 name="optOutRatio" type="double"/>
+      <attribute expr="Percent(@totalRecipientClick, @successWithoutSeeds)" label="Cumulated click ratio"
+                 name="totalRecipientClickRatio" type="double"/>
+      <attribute expr="Percent(@mirrorPage, @successWithoutSeeds)" label="Cumulated click ratio on the mirror page"
+                 name="mirrorPageRatio" type="double"/>
+      <attribute desc="Ratio between the number of recipients who have clicked at least once in the mail and the number of recipients who have opened the mail. Clicks on the opt-out and mirror page links are ignored."
+                 expr="Percent(@recipientClick, @estimatedRecipientOpen)" label="Reactivity rate"
+                 name="reactivity" type="double"/>
+
+      <attribute desc="Rate between recorded transactions and messages sent." expr="Percent(@transaction, @successWithoutSeeds)"
+                 label="Transaction rate" name="transactionRatio" type="double"/>
+      <attribute expr="Iif(@transaction=0, 0, @amount / @transaction)" label="Average transaction amount"
+                 name="avgAmount" type="double"/>
+      <attribute expr="Iif(@transaction=0, 0, @article / @transaction)" label="Average count of articles per transaction"
+                 name="avgArticle" type="long"/>
+    </element>
+
+    <!--
+         Element properties (inherited from xtk:job, transmitted through job's GetStatus)
+         in our case the fields are mapped in sql
+         ATTENTION: this node is XML but contains SQL children. Therefore when xtk queries
+                    using 'select *' on the delivery don't get the sql fields. You have
+                    to add them explicitely in the query.
+      -->
+    <element advanced="false" name="properties" xml="true">
+      <help>Indicators computed during delivery analysis</help>
+
+      <attribute advanced="true" defOnDuplicate="true" desc="Delivery status after analysis"
+                 enum="deliveryState" label="Status after analysis" name="deliveryState"
+                 type="byte">
+        <help>Internal technical indicator. It is a copy of [delivery/@state] needed by the delivery wizard during the analysis step.</help>
+      </attribute>
+      <attribute advanced="true" label="Identifier of the last proof created." name="FCPid"
+                 type="string">
+        <help>Technical indicator used when creating a proof from a delivery instance</help>
+      </attribute>
+      <attribute desc="Last sequence number used by a Proof" label="Sequence number"
+                 name="FCPLastNum" type="long"/>
+      <attribute advanced="true" desc="Number of messages to send to FCP or seed addresses"
+                 label="Messages to sent (FCP and seed addresses)" name="FCPOrSeedCount"
+                 sql="true" type="long" xml="true"/>
+
+      <attribute advanced="true" desc="Identifier of the associated delivery in the mid-sourcing database."
+                 label="Remote identifier" name="midRemoteId" sql="true" type="long"
+                 xml="true"/>
+      <attribute advanced="true" label="Internal name of the mid-sourcing account used"
+                 name="midAccountUsedName" type="string"/>
+      <attribute advanced="true" label="Mid-sourcing account used" name="midAccountUsedCs"
+                 type="string"/>
+      <attribute advanced="true" desc="Template last-change date used to create the delivery action."
+                 label="Template modification date" name="scenarioModTime" sql="true"
+                 type="datetime" xml="true"/>
+      <attribute advanced="true" desc="Identifier of the last group of messages added in notification mode. 0 if the delivery is not using the notification mode."
+                 label="Notification mode" name="notificationId" type="long" xml="true"/>
+      <attribute advanced="true" applicableIf="HasPackage('xxl:fullfdaMid')" label="Number of attemps to copy delivery parts"
+                 name="ffdaPartsCopyAttempts" type="long" xml="false"/>
+      <attribute advanced="true" applicableIf="HasPackage('xxl:fullfdaMid')" label="Set when all delivery parts are copied"
+                 name="ffdaAllPartsCopied" type="boolean" xml="false"/>
+      <attribute advanced="true" applicableIf="HasPackage('xxl:fullfdaCommon')" desc="Override workload type of the delivery being executed"
+                 enum="nms:workloadType:workloadTypes" label="Workload type override in FFDA mode"
+                 name="deliveryWorkloadType" type="string" xml="true"/>
+
+      <!-- counters of messages of the target audience -->
+      <attribute desc="Total count of messages to be delivered" label="Messages to send"
+                 name="toDeliver" sql="true" type="long" xml="true"/>
+      <attribute desc="Count of lines rejected from the source file" label="Rejected during import"
+                 name="importReject" sql="true" type="long" xml="true"/>
+      <attribute desc="Number of seeds inserted" label="Seed addresses" name="seedProcessed"
+                 sql="true" type="long" xml="true"/>
+      <attribute desc="Number of messages excluded by the typology rules" label="Messages excluded by the rule"
+                 name="reject" sql="true" type="long" xml="true"/>
+      <attribute desc="Number of propositions selected" label="Propositions" name="propositionCount"
+                 sql="true" type="long" xml="true"/>
+      <!-- computed indicators -->
+      <attribute expr="@toDeliver + @importReject + @reject" label="Initial target population"
+                 name="totalTarget" type="long" xml="false">
+        <help>Number of messages processed during the analysis, which equals the number of delivery logs linked to the delivery.</help>
+      </attribute>
+      <attribute desc="Number of lines exported including the seeds" expr="@toDeliver"
+                 label="Number of lines in the file" name="outputLine" type="long"
+                 xml="false"/>
+      <attribute expr="Percent(@reject, @totalTarget)" label="Rule-based exclusion ratio"
+                 name="rejectRatio" type="double" xml="false"/>
+
+      <!-- counters of messages per format -->
+      <attribute desc="Number of messages in HTML format" label="HTML messages" name="html"
+                 sql="true" type="long" xml="true"/>
+      <attribute desc="Number of messages in text format" label="Text messages" name="text"
+                 sql="true" type="long" xml="true"/>
+      <attribute desc="Number of messages in Multipart/Alternative format" label="Multipart messages"
+                 name="multipart" sql="true" type="long" xml="true"/>
+      <!-- computed indicators -->
+      <attribute expr="Percent(@html, @toDeliver)" label="HTML messages ratio" name="htmlRatio"
+                 type="double" xml="false"/>
+      <attribute expr="Percent(@text, @toDeliver)" label="Text messages ratio" name="textRatio"
+                 type="double" xml="false"/>
+      <attribute expr="Percent(@multipart, @toDeliver)" label="Multipart messages ratio"
+                 name="multipartRatio" type="double" xml="false"/>
+
+      <attribute expr="@toDeliver - @multipart - @html - @text" label="SMS Messages"
+                 name="sms" type="long"/>
+      <!-- Always one for now since deliveries are not multi-media
+      <attribute name="smsRatio" label="Proportion de messages SMS"
+                 expr="Percent(@sms, @toDeliver)"/>
+      -->
+
+      <attribute desc="Directory type of the output file (export, upload or none)"
+                 label="Directory of the output file" name="outputDir" type="string"/>
+      <attribute desc="Name of the output file on the server directory" label="Output file name"
+                 name="outputFile" type="string"/>
+      <attribute desc="Local full name of the file (defined in the export template)"
+                 label="Local name of the output file" name="outputLocal" type="string"/>
+
+      <attribute desc="Count of tracked URLs for this delivery" label="Count of tracked URLs"
+                 name="url" sql="true" type="long" xml="true"/>
+      <element advanced="false" label="Counter" name="DMDCounters" xml="true">
+        <attribute desc="Number of messages to send using the Direct Mail Delivery module."
+                   label="Deliver using Direct Mail" name="dmdCount" type="long"/>
+        <attribute desc="Number of messages to send using the classical method."
+                   label="Deliver using native SMTP" name="smtpCount" type="long"/>
+      </element>
+
+    </element>
+
+    <!-- Attachments table -->
+    <!-- ## FB 2006-12-11 the attachment list can't be ordered because it's stored as SQL -->
+    <attribute desc="Message sent contains attachments" label="Add attached files"
+               name="hasAttachments" type="boolean"/>
+    <element autopk="true" desc="Attached files referenced in the delivery action"
+             img="nms:attachment.png" integrity="owncopy" label="Attached files"
+             labelSingular="Attached file" name="attachment" pkgStatus="always" sqltable="NmsAttachments"
+             template="xtk:common:fileToUpload" unbound="true">
+      <compute-string expr="@label"/>
+      <attribute desc="Attachment label" name="label" template="xtk:common:label"/>
+      <attribute desc="Attachment type" enum="attachmentType" label="Type" length="16"
+                 name="type" required="true" type="string" xml="true"/>
+      <attribute advanced="true" desc="File size in bytes (0 if the size is not known)."
+                 label="Size in bytes" name="size" type="long" xml="true"/>
+      <attribute desc="Compression mode (PDF)" enum="compressMode" label="Compression"
+                 name="compressMode" type="string"/>
+      <element desc="Content to personalize for dynamic PDF generation." label="Customizable content"
+               name="source" type="CDATA"/>
+      <attribute advanced="true" desc="Content-Type field used for the attachment in the message sent."
+                 label="Content type" length="100" name="contentType" type="string"/>
+      <attribute advanced="true" desc="Codepage associated with the message attachment."
+                 label="Character encoding" name="codePage" type="long"/>
+      <!-- filtering recipients recieving the attachment -->
+      <attribute default="false" desc="Enable filtering of recipients who will receive the attachment"
+                 label="Filter" name="filterActive" type="boolean" xml="true"/>
+      <element desc="Script calculating for each recipient if they should receive the attachment"
+               label="Filtering script" name="filterScript" type="CDATA" xml="true"/>
+      <!-- script to compute the name of the attachment file in the e-mail -->
+      <attribute default="false" desc="Script the name of the file name displayed in the mails sent"
+                 label="Script name" name="nameScriptActive" type="boolean" xml="true"/>
+      <element desc="Script used to compute the file name displayed in the mail sent to the recipient"
+               label="Name script" name="nameScript" type="CDATA" xml="true"/>
+      <!-- infos set only by the mta when loading a delivery entity. Exist only in the mta delivery file cache -->
+      <attribute advanced="true" desc="Encoding type used to send attachments." label="Encoding"
+                 name="encoding" type="string" xml="true"/>
+      <attribute advanced="true" desc="Name of the file on the server associated with the attachment."
+                 label="File" name="fileName" type="string" xml="true"/>
+    </element>
+
+    <element applicableIf="HasPackage('nms:coupon')" label="Coupon" name="coupon"
+             required="false" revDesc="Deliveries using this coupon" revIntegrity="normal"
+             revLabel="Deliveries" target="nms:coupon" type="link"/>
+
+    <element applicableIf="HasPackage('nms:webAnalytics')" label="Web Analytics account"
+             name="webAnalyticsAccount" revIntegrity="define" target="nms:extAccount"
+             type="link"/>
+
+    <!-- Extra fields sent to the Web Analytics partner -->
+    <element advanced="true" applicableIf="HasPackage('nms:webAnalytics')" label="Web Analytics extra fields"
+             name="webAnalytics">
+      <attribute label="Tag 1" name="tag1" type="string" xml="true"/>
+      <attribute label="Tag 2" name="tag2" type="string" xml="true"/>
+      <attribute label="Tag 3" name="tag3" type="string" xml="true"/>
+    </element>
+
+
+    <!-- delivery parts (link is defined on both sides)  -->
+    <element advanced="true" integrity="own" label="Action parts" name="deliveryPart"
+             revLink="delivery" target="nms:deliveryPart" type="link" unbound="true"/>
+
+    <!-- deleteStatus (there is a recycle bin for deliveries) -->
+    <attribute name="deleteStatus" template="xtk:common:deleteStatus"/>
+    <attribute name="deleteDate" template="xtk:common:deleteDate"/>
+
+    <!-- folder and folderProcess links (we rename xtk:job ones) -->
+    <element defOnDuplicate="true" default="iif(@isModel, DefaultFolder('nmsDeliveryModel', [@_folder-id]), DefaultFolder('nmsDelivery', [@_folder-id]))"
+             label="Folder" name="folder" revDesc="Deliveries contained in this folder"
+             revLabel="Delivery"/>
+    <element defOnDuplicate="true" default="iif (@isModel, DefaultFolder('nmsDelivery', [@_folderProcess-id]), 0)"
+             name="folderProcess" revDesc="Delivery templates executing deliveries in this folder"
+             revLabel="Delivery templates" revLink="delivery-folderProcess" revTarget="nms:delivery"/>
+
+    <!-- Paramètres du message transactionnel -->
+    <element applicableIf="HasPackage('nms:messageCenter')" label="Parameters of the transactional message"
+             name="triggerMessage">
+      <attribute enum="publicationStatus" label="Publication status" name="publicationStatus"
+                 type="byte"/>
+      <attribute dbEnum="eventType" label="Event type" name="eventType" type="string"/>
+      <attribute expr="[../scheduling/@contactDate]" label="Published on" name="publicationDate"
+                 type="datetime"/>
+      <attribute label="Space call up URL" name="offerSpaceUrl" type="string" xml="true"/>
+      <attribute label="Category" name="offerCategory" type="string" xml="true"/>
+      <attribute label="Anonymous category" name="offerAnonymousCategory" type="string"
+                 xml="true"/>
+      <attribute label="Themes" name="offerThemes" type="string" xml="true"/>
+      <attribute desc="Identifier of the transactional message template" label="Template identifier"
+                 name="templateId" type="long" xml="true"/>
+    </element>
+
+    <attribute label="Is FFDA" name="isFfda" type="boolean" xml="true"/>
+
+  </element>
+
+  <!-- ==================
+       Methods defintions
+       ================== -->
+  <methods async="true">
+    <method name="PrepareTargetImpl">
+      <help>Delivery target count and arbitration</help>
+      <!-- WARNING: this method MUST be called through xtk:job mecanism -->
+    </method>
+    <method name="PrepareMessageImpl">
+      <help>Message personalization</help>
+      <!-- WARNING: this method MUST be called through xtk:job mecanism -->
+    </method>
+    <method library="nms:delivery.js" name="PrepareTarget">
+      <help>Delivery target count and arbitration</help>
+      <!-- WARNING: this method MUST be called through xtk:job mecanism -->
+    </method>
+    <method name="PrioritizeTarget">
+      <help>Delivery target arbitration</help>
+      <!-- WARNING: this method MUST be called through xtk:job mecanism -->
+    </method>
+    <method library="nms:delivery.js" name="PrepareMessage">
+      <help>Message personalization</help>
+      <!-- WARNING: this method MUST be called through xtk:job mecanism -->
+    </method>
+    <method library="nms:delivery.js" name="Prepare">
+      <help>Delivery analysis: Targeting and personalization</help>
+      <!-- WARNING: this method MUST be called through xtk:job mecanism -->
+    </method>
+    <method name="PrepareAndStart">
+      <help>Analyzes the delivery and executes it straightaway if no errors are encountered</help>
+      <!-- WARNING: this method MUST be called through xtk:job mecanism -->
+    </method>
+    <method name="PrepareNotification">
+      <help>Analyze a notification being added to an existing delivery action</help>
+      <!-- WARNING: this method MUST be called through xtk:job mecanism -->
+    </method>
+    <method name="PrepareProof">
+      <help>Delivery analysis in view of generating a proof</help>
+      <!-- WARNING: this method MUST be called through xtk:job mecanism -->
+      <parameters>
+        <param desc="Execute the created proof straightaway." inout="in" name="bStart"
+               type="boolean"/>
+      </parameters>
+    </method>
+
+    <method name="PrepareFromId" static="true">
+      <help>Analyze a delivery.</help>
+      <parameters>
+        <param desc="Delivery ID." inout="in" name="deliveryId" type="string"/>
+      </parameters>
+    </method>
+
+    <method name="HtmlToText" static="true">
+      <help>Converts HTML content into plain text</help>
+      <parameters>
+        <param desc="HTML content to convert" inout="in" name="htmlContent" type="string"/>
+        <param desc="Returns converted text" inout="out" name="textContent" type="string"/>
+      </parameters>
+    </method>
+
+    <method name="DiagnoseHTML" static="true">
+      <help>Starts the HTML content diagnostic</help>
+      <parameters>
+        <param desc="HTML content to be checked" inout="in" name="htmlContent" type="string"/>
+        <param desc="The mail format" inout="in" name="format" type="byte"/>
+        <param desc="Returns the diagnostic" inout="out" name="diagnostic" type="DOMDocument"/>
+      </parameters>
+    </method>
+
+    <!-- Play, pause, and stop commands. Called from the navtree, therefore the must
+         have one and only one string parameter: the deliveryId -->
+    <method name="Play" static="true">
+      <help>Start a delivery.</help>
+      <parameters>
+        <param desc="Delivery ID." inout="in" name="deliveryId" type="string"/>
+      </parameters>
+    </method>
+    <method name="Pause" static="true">
+      <help>Suspend a delivery.</help>
+      <parameters>
+        <param desc="Delivery ID." inout="in" name="deliveryId" type="string"/>
+      </parameters>
+    </method>
+    <method name="Stop" static="true">
+      <help>Stop a delivery in progress.</help>
+      <parameters>
+        <param desc="Delivery ID." inout="in" name="deliveryId" type="string"/>
+      </parameters>
+    </method>
+    <method name="LaunchFCP" static="true">
+      <help>Starts a Proof copy for a delivery</help>
+      <parameters>
+        <param desc="Delivery ID." inout="in" name="deliveryId" type="long"/>
+      </parameters>
+    </method>
+    <method const="true" name="LoadExpandedContents">
+      <help>Load a list of components for preprocessing with dependencies (personalization blocks, options, additional script objects, etc.).</help>
+      <parameters>
+        <param desc="List of component identifiers separated by commas (e.g. 'option|NmsServer_URL|text,includeView|UnsubscriptionLink|html')."
+               inout="in" name="ids" type="string"/>
+        <param desc="Returns the contents as a 'material' element." inout="out" name="material"
+               type="DOMDocument"/>
+      </parameters>
+    </method>
+
+    <method const="true" name="BuildPreviewFromId" static="true">
+      <help>Built the preview of a content to delivery or of a line of the output file (in external mode).</help>
+      <example language="javascript">
+        <programlisting>var res = nms.delivery.BuildPreviewFromId(
+                           deliveryId,
+                           {params: {content: "html", filter: "@id=1234"}})
+var preview     = res[0]
+var queryResult = res[1]</programlisting>
+      </example>
+
+      <parameters>
+        <param desc="Delivery ID." inout="in" name="deliveryId" type="long"/>
+        <param desc="Recipient filtering condition (@filter = '@id = 5673'), content identifier (@content = 'html', 'text', 'sms', 'webContent1', 'outputFile'...), @targetPart = 1345686..."
+               inout="in" name="params" type="DOMDocument"/>
+        <param desc="Returns all the parameters of the generated preview." inout="out"
+               name="preview" type="DOMDocument"/>
+        <param desc="Returns the data loaded to compute the preview." inout="out"
+               name="queryResult" type="DOMDocument"/>
+      </parameters>
+    </method>
+
+    <method const="true" name="BuildPreview">
+      <help>Built the preview of a content to delivery or of a line of the output file (in external mode).</help>
+      <parameters>
+        <param desc="Recipient filtering condition (@filter = '@id = 5673'), content identifier (@content = 'html', 'text', 'sms', 'webContent1', 'outputFile'...), @targetPart = 1345686..."
+               inout="in" name="params" type="DOMDocument"/>
+        <param desc="Returns all the parameters of the generated preview" inout="out"
+               name="preview" type="DOMDocument"/>
+        <param desc="Returns the data loaded to compute the preview." inout="out"
+               name="queryResult" type="DOMDocument"/>
+      </parameters>
+    </method>
+
+    <method name="SaveUrlInfo" static="true">
+      <help>Save URLs of this delivery as URL templates.</help>
+      <parameters>
+        <param desc="List of new URLs (not associated with an URL template)" inout="in"
+               name="insUrlList" type="DOMDocument"/>
+        <param desc="List of URL templates to update" inout="in" name="updUrlList"
+               type="DOMDocument"/>
+      </parameters>
+    </method>
+
+    <method name="GetFilesToDownload" static="true">
+      <help>Returns the list of files found on the server associated with the delivery.</help>
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+        <param desc="Returns the list of files which can be downloaded as element [properties/filesToDownload]"
+               inout="out" name="filesToDownload" type="DOMDocument"/>
+        <param desc="Returns the list of files which cannot be downloaded as element [properties/filesNotToDownload]"
+               inout="out" name="filesNotToDownload" type="DOMDocument"/>
+      </parameters>
+    </method>
+
+    <method name="UpdateImageConfig" static="true">
+      <help>Modifies the imageConfig node to take into account the images already on the server.</help>
+      <parameters>
+        <param desc="Configuration of image handling" inout="inout" name="imageConfig"
+               type="DOMDocument"/>
+      </parameters>
+    </method>
+
+    <method name="GetDlStatusAndLogs" static="true">
+      <help>Retrieve the last logs from the journal and the delivery status.</help>
+      <!-- This method is similar to xtk:job:GetStatus but specific to the delivery (delivery state) -->
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+        <param desc="Identifier of the last journal entry returned in the previous call"
+               inout="in" name="lastLogId" type="long"/>
+        <param desc="Delivery status" enum="deliveryState" inout="out" name="deliveryState"
+               type="short"/>
+        <param desc="Log messages" inout="out" name="returnLogs" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method name="CollectLogs" static="true">
+      <help>Creates a table with all the delivery log messages for a list of deliveries</help>
+      <parameters>
+        <param desc="Prioritization unique identifier" inout="in" name="id" type="long"/>
+        <param desc="list of deliveries to take into account" inout="in" name="deliveries"
+               type="DOMElement"/>
+        <param desc="table to create to contain all the log messages" inout="in"
+               name="logTable" type="string"/>
+      </parameters>
+    </method>
+    <method name="PrioritizeLogs" static="true">
+      <help>Prioritize the delivery log for a list of deliveries</help>
+      <parameters>
+        <param desc="Prioritization unique identifier" inout="in" name="id" type="long"/>
+        <param desc="list of deliveries to take into account" inout="in" name="deliveries"
+               type="DOMElement"/>
+        <param desc="table containing all the log messages" inout="in" name="logTable"
+               type="string"/>
+      </parameters>
+    </method>
+
+    <!-- Job Interface wrapping -->
+    <method name="ExecuteJob" static="true">
+      <help>Executes a synchronous process on a delivery.</help>
+      <parameters>
+        <param desc="Name of the method to call on entity" inout="in" name="methodName"
+               type="string"/>
+        <param desc="Delivery identifier" inout="in" name="id" type="long"/>
+      </parameters>
+    </method>
+    <method name="SubmitJob" static="true">
+      <help>Submits a job for a delivery for asynchronous processing</help>
+      <parameters>
+        <param desc="Name of the method to call on entity" inout="in" name="methodName"
+               type="string"/>
+        <param desc="Delivery identifier" inout="in" name="id" type="long"/>
+      </parameters>
+    </method>
+    <!-- Submit delivery API -->
+    <method name="SubmitDelivery" static="true">
+      <help>Creation and submission of a delivery from a scenario (from its internal name).</help>
+      <parameters>
+        <param desc="Internal name of the delivery template" inout="in" name="scenarioName"
+               type="string"/>
+        <param desc="XML content to add to the template" inout="in" name="content"
+               type="DOMElement"/>
+        <param desc="Identifier of the new delivery (returned even if the analysis fails)"
+               inout="out" name="deliveryId" type="long"/>
+      </parameters>
+      <example>
+        <para>The following example submits a delivery by taking the "mail" template and replacing the text content by "Hello world...".</para>
+        <programlisting>var deliveryId = SubmitDelivery("mail",
+                                {delivery: {
+                                  content: {
+                                    text: {
+                                      source: {$: "Hello world..."}
+                                    }
+                                  }
+                                }})</programlisting>
+      </example>
+    </method>
+
+    <!-- Submit delivery API -->
+    <method name="SubmitNotification" static="true">
+      <help>Create and submit a notification from a scenario.</help>
+      <description>
+        <para>Warning: this API is not built to manage large volumes of data or work in real-time. It is developed to process a maximum of several calls per minute. SubmitNotification blocks the thread during delivery analysis. This may take a few seconds.</para>
+        <para>The "target" parameter specifies the delivery target. It will override a target specified in the template.
+To deliver to a target in the database the target element will use the following syntax:</para>
+        <programlisting>&lt;delivery&gt;
+  &lt;targets&gt;
+    &lt;deliveryTarget&gt;
+      &lt;targetPart type='query' exclusion='false' ignoreDeleteStatus='false'&gt;
+        &lt;where&gt;
+          &lt;condition expr='[@folder-id] = 1050'/&gt;
+        &lt;/where&gt;
+      &lt;/targetPart&gt;
+    &lt;/deliveryTarget&gt;
+  &lt;/targets&gt;
+&lt;/delivery&gt;</programlisting>
+        <para>To deliver to a target in a file:</para>
+        <programlisting>&lt;delivery&gt;
+  &lt;targets&gt;
+    &lt;deliveryFile upload='false'&gt;
+      &lt;name&gt;c:/tmp/myFile.csv&lt;/name&gt;
+    &lt;/deliveryFile&gt;
+  &lt;/targets&gt;
+&lt;/delivery&gt;</programlisting>
+        <para>It is possible to explicity define the target (in reality the content of the file used as the target):</para>
+        <programlisting>&lt;delivery&gt;
+  &lt;targets fromExternalSource='true'&gt;
+    &lt;externalSource&gt;MsgId|ClientId|Title|Name|FirstName|Mobile|Email|Market_segment|Product_propensity1|Product_propensity2|Product_propensity3|Product_propensity4|Support_Number|Amount|Threshold1|
+                    000001234|M.|Martin|Peter|0650201020|pmartin@neolane.com|1|A1|A2|A3|A4|E12|120000|100000
+    &lt;/externalSource&gt;
+  &lt;/targets&gt;
+&lt;/delivery&gt;</programlisting>
+It is also possible to keep the target defined in the template with the attribute "_keepTemplateTarget"
+<programlisting>&lt;delivery&gt;
+  &lt;targets _keepScenarioTarget='true'/&gt;
+&lt;/delivery&gt;</programlisting>
+      </description>
+      <parameters>
+        <param desc="Internal name of the template" inout="in" name="scenarioName"
+               type="string"/>
+        <param desc="Delivery target population replacing the one in the scenario"
+               inout="in" name="target" type="DOMElement"/>
+        <param desc="Notification identifier" inout="out" name="notificationId" type="long"/>
+      </parameters>
+    </method>
+
+    <method name="CreateFromModel" static="true">
+      <help>Creation of a delivery from a template (from its internal name).</help>
+      <parameters>
+        <param desc="Internal name of the delivery template" inout="in" name="scenarioName"
+               type="string"/>
+        <param desc="XML content to add to the template" inout="in" name="content"
+               type="DOMElement"/>
+        <param desc="Returns the delivery document created" inout="out" name="delivery"
+               type="DOMDocument"/>
+      </parameters>
+    </method>
+
+    <method name="SubmitDeliveryById" static="true">
+      <help>Create and submit a delivery from a scenario (identified by it's internal name).</help>
+      <parameters>
+        <param desc="Template identifier" inout="in" name="scenarioId" type="long"/>
+        <param desc="XML content to add to the template" inout="in" name="content"
+               type="DOMElement"/>
+        <param desc="XML content to add to the template" inout="out" name="deliveryId"
+               type="long"/>
+      </parameters>
+    </method>
+
+    <method name="QueueNotification" static="true">
+      <help>Request to queue a notification referencing a delivery template.</help>
+      <description>
+        <para>This API can only be used in the context of Web applications/Online surveys.</para>
+        <para>Contrary to SubmitNotification, QueueNotification uses a dedicated thread for queued notifications.</para>
+      </description>
+      <parameters>
+        <param desc="Internal name of the template" inout="in" name="scenarioName"
+               type="string"/>
+        <param desc="Delivery target population" inout="in" name="target" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <!-- Mirror page generation -->
+    <method access="anonymous" name="BuildMirror" static="true">
+      <help>Build the HTML mirror page.</help>
+      <parameters>
+        <param desc="Reversible crypt for message and delivery part identifiers"
+               inout="in" name="crypted" type="string"/>
+        <param desc="Content of the mirror page" inout="out" name="content" type="CDATA"/>
+        <param desc="HTTP response in case of error" inout="out" name="responseCode"
+               type="long"/>
+      </parameters>
+    </method>
+
+    <!-- Mirror page generation -->
+    <method access="anonymous" name="BuildMirrorEx" static="true">
+      <help>Build the HTML mirror page.</help>
+      <parameters>
+        <param desc="Reversible crypt for message and delivery part identifiers"
+               inout="in" name="crypted" type="string"/>
+        <param desc="Parameters" inout="in" name="parameters" type="DOMElement"/>
+        <param desc="Content of the mirror page" inout="out" name="content" type="CDATA"/>
+        <param desc="HTTP response in case of error" inout="out" name="responseCode"
+               type="long"/>
+      </parameters>
+    </method>
+
+    <!-- URL of a mirror page -->
+    <method name="GetMirrorURL" static="true">
+      <help>Obtains the URL of an HTML mirror page.</help>
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+        <param desc="Message ID" inout="in" name="message" type="string"/>
+        <param desc="Mirror page URL" inout="out" name="url" type="string"/>
+      </parameters>
+    </method>
+
+    <!-- Viral page generation -->
+    <method access="anonymous" name="BuildForward" static="true">
+      <help>Builds the HTML page.</help>
+      <parameters>
+        <param desc="Reversible crypt for message and delivery part identifiers"
+               inout="in" name="crypted" type="string"/>
+        <param desc="URL parameters" inout="in" name="parameters" type="DOMElement"/>
+        <param desc="Page content" inout="out" name="content" type="CDATA"/>
+        <param desc="HTTP response in case of error" inout="out" name="responseCode"
+               type="long"/>
+      </parameters>
+    </method>
+
+    <!-- UpdateBroadLogs (ex: maileva feedback) -->
+    <method name="UpdateBroadLogs" static="true">
+      <help>Update the status of the delivery logs, perform error handling and update the delivery counters.</help>
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+        <param desc="Collection containing the nms:broadLog records to update (@id, @status, @eventDate and @lastModified must be specified)"
+               inout="in" name="logs" type="DOMDocument"/>
+        <param desc="Specifies whether to raise an error for an invalid delivery identifier."
+               inout="in" name="deliveryMustExist" type="boolean"/>
+      </parameters>
+    </method>
+
+    <!-- recompute stats and indicators -->
+    <method name="RecomputeStats" static="true">
+      <help>Recompute delivery and tracking statistics for a delivery action.</help>
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+        <param desc="Bit field describing what to recompute (see the 'nms:delivery:dirtyFlags' enumeration)."
+               inout="in" name="dirtyFlags" type="byte"/>
+      </parameters>
+    </method>
+
+    <method name="ExecCommand" static="true">
+      <help>Execute a command on a delivery.</help>
+      <!-- no specific right access, because also used in standard mode and need an already active delivery -->
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="string"/>
+        <param desc="Command name ('play', 'pause' or 'stop')" inout="in" name="command"
+               type="string"/>
+        <param desc="Delivery status after the command is executed" inout="out" name="newState"
+               type="byte"/>
+      </parameters>
+    </method>
+
+    <method name="ValidateWavesDefinition" static="true">
+      <help>Check the consistency of information used in the definition of the waves.</help>
+      <parameters>
+        <param desc="Definition to approve." inout="in" name="definition" type="DOMElement"/>
+        <param desc="Definition approved." inout="out" name="validation" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <!-- ================
+         Mid-sourcing API
+         ================ -->
+    <!-- Mid sourcing delivery submission -->
+    <method access="midSourcingSubmit" name="SubmitMidSourcing" static="true">
+      <help>Submit a delivery in mid-sourcing mode.</help>
+      <parameters>
+        <param desc="Document representing the delivery." inout="in" name="delivery"
+               type="DOMDocument"/>
+        <param desc="No longer used" inout="in" name="routingMatch" type="DOMDocument"/>
+        <param desc="Full folder name (in the sender database)." inout="in" name="folderName"
+               type="string"/>
+        <param desc="Identifier of the delivery in the receiver database." inout="out"
+               name="remoteId" type="long"/>
+        <param desc="No longer used" inout="out" name="remoteMatchId" type="long"/>
+      </parameters>
+    </method>
+
+    <method access="midSourcingSubmit" name="FinalizeMidPreparation" static="true">
+      <help>Finalize the analysis of a delivery in mid-sourcing mode.</help>
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+        <param desc="Error code returned by the analysis on the marketing database (method-level error code is not used for this)"
+               inout="in" name="errorCode" type="long"/>
+        <param desc="Delivery properties to update" inout="in" name="properties"
+               type="DOMDocument"/>
+        <param desc="Specifies if this is a retry for the method call." inout="in"
+               name="retry" type="boolean"/>
+        <param desc="Returns an error code preventing the caller to perform retires. Otherwise, the error can be temporary."
+               inout="out" name="fatalError" type="long"/>
+        <param desc="Error message associated with the 'fatalError' error code."
+               inout="out" name="fatalErrorMsg" type="string"/>
+      </parameters>
+    </method>
+
+    <method name="PullDeliveryParts" static="true">
+      <help>For a FFDA delivery, pull delivery parts from the FFDA database into the mid-sourcing database.</help>
+      <parameters>
+        <param desc="Mid-sourcing delivery identifier" inout="in" name="deliveryId"
+               type="long"/>
+      </parameters>
+    </method>
+
+    <method name="AppendDeliveryPart" static="true">
+      <help>Add a part to a delivery being prepared.</help>
+      <!-- no specific right access, because also used in standard mode and need an already active delivery -->
+      <parameters>
+        <param desc="Document representing the delivery part (or a collection of delivery parts)."
+               inout="in" name="deliveryPart" type="DOMDocument"/>
+        <param desc="Specifies if this is a new try to submit this delivery part."
+               inout="in" name="retry" type="boolean"/>
+        <param desc="Delivery part identifier in the database (when it is not a collection)."
+               inout="out" name="deliveryPartId" type="long"/>
+        <param desc="Returns an error code preventing the caller to perform retires. Otherwise, the error can be temporary."
+               inout="out" name="fatalError" type="long"/>
+        <param desc="Error message associated with the 'fatalError' error code."
+               inout="out" name="fatalErrorMsg" type="string"/>
+      </parameters>
+    </method>
+
+    <method name="StoreMirrorPageInfoEx" static="true">
+      <help>Adds information to generate mirror pages for a set of delivery parts.</help>
+      <!-- no specific right access, because also used in standard mode and need an already active delivery -->
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+        <param desc="Is it a notification?" inout="in" name="notification" type="boolean"/>
+        <param desc="Number of parts" inout="in" name="partsCount" type="long"/>
+        <param desc="First part identifier" inout="in" name="firstPartId" type="long"/>
+        <param desc="Notification identifier" inout="in" name="notificationId" type="long"/>
+        <param desc="Returns an error code preventing the caller to perform retires. Otherwise, the error can be temporary."
+               inout="out" name="fatalError" type="long"/>
+        <param desc="Error message associated with the 'fatalError' error code."
+               inout="out" name="fatalErrorMsg" type="string"/>
+      </parameters>
+    </method>
+
+    <method name="StoreMirrorPageInfo" static="true">
+      <help>Adds information to generate mirror pages for a set of delivery parts.</help>
+      <!-- no specific right access, because also used in standard mode and need an already active delivery -->
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+        <param desc="Number of parts" inout="in" name="partsCount" type="long"/>
+        <param desc="First part identifier" inout="in" name="firstPartId" type="long"/>
+        <param desc="Last part identifier" inout="in" name="lastPartId" type="long"/>
+        <param desc="Returns an error code preventing the caller to perform retires. Otherwise, the error can be temporary."
+               inout="out" name="fatalError" type="long"/>
+        <param desc="Error message associated with the 'fatalError' error code."
+               inout="out" name="fatalErrorMsg" type="string"/>
+      </parameters>
+    </method>
+
+    <method name="UpdateCachedDelivery">
+      <help>Must be called every time the delivery is been modified in the memory so that other threads have access to an up to date version (private method).</help>
+    </method>
+
+    <method name="InvalidateDeliveryCache" static="true">
+      <help>Must be called at the end of message preparation except for mid-sourcing (private method).</help>
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+      </parameters>
+    </method>
+
+    <method name="GetMidBroadLogs" static="true">
+      <help>Retrieve the delivery logs modified last in mid-sourcing-mode.</help>
+      <parameters>
+        <param desc="Retrieve logs modified since this date (on the mid-sourcing server)."
+               inout="in" name="startDate" type="datetime"/>
+        <param desc="Maximum number of logs to retrieve, as long as they have not been updated within the same second."
+               inout="in" name="logCount" type="long"/>
+        <param desc="Reference date from the issuing server. Used to adjust the delivery log dates."
+               inout="in" name="emitterDate" type="datetime"/>
+        <param desc="Output document, list of delivery logs." inout="out" name="result"
+               type="DOMDocument"/>
+        <param desc="Date of the first log retrieved (greater than startDate)." inout="out"
+               name="nextDate" type="datetime"/>
+      </parameters>
+    </method>
+
+    <method name="GetMidDeliveries" static="true">
+      <help>Retrieve the status of the deliveries modified last in mid-sourcing-mode.</help>
+      <parameters>
+        <param desc="Retrieve modifications since this date (on the mid-sourcing server)."
+               inout="in" name="startDate" type="datetime"/>
+        <param desc="Maximum number of deliveries to retrieve, provided they were not updated during the same second."
+               inout="in" name="maxCount" type="long"/>
+        <param desc="Reference date of the issuing server. Used to adjust dates of deliveries."
+               inout="in" name="emitterDate" type="datetime"/>
+        <param desc="Output document, list of deliveries updated." inout="out" name="result"
+               type="DOMDocument"/>
+        <param desc="Start date for the next call." inout="out" name="nextDate" type="datetime"/>
+      </parameters>
+    </method>
+
+    <method name="GetMidDeliveryStats" static="true">
+      <help>Retrieve the recently modified delivery statistics from mid-sourcing server.</help>
+      <parameters>
+        <param desc="Retrieve modifications since this date (on the mid-sourcing server)."
+               inout="in" name="startDate" type="datetime"/>
+        <param desc="Maximum number of deliveryStat entries to retrieve, provided they were not updated during the same second."
+               inout="in" name="maxDlvStatCount" type="long"/>
+        <param desc="Reference date of the issuing server. Used to synchronize dates between servers."
+               inout="in" name="emitterDate" type="datetime"/>
+        <param desc="Output document, list of the updated deliveryStat entries."
+               inout="out" name="result" type="DOMDocument"/>
+        <param desc="Start date for the next call." inout="out" name="nextDate" type="datetime"/>
+      </parameters>
+    </method>
+
+    <method name="CleanupDeliveries" static="true">
+      <help>Specifies that the mid-sourcing server should delete certain deliveries.</help>
+      <parameters>
+        <param desc="List of delivery identifiers in the sending database (comma separated)"
+               inout="in" name="deliveryId" type="string"/>
+      </parameters>
+    </method>
+
+    <!-- ================
+         Easy Resource Management
+         ================ -->
+    <method name="DispatchImages" static="true">
+      <help>Tells the application server to send the images to the mid-sourcing server.</help>
+      <parameters>
+        <param desc="List of images to upload to the mid-sourcing server." inout="in"
+               name="images" type="string"/>
+        <param desc="Identifier of the delivery router." inout="in" name="providerId"
+               type="long"/>
+        <param desc="Name of the delivery router." inout="in" name="providerName"
+               type="string"/>
+      </parameters>
+    </method>
+
+    <method name="ImagePublishing" static="true">
+      <help>Performs the post-processing: moving the image to a specified folder and making it available online</help>
+      <parameters>
+        <param inout="in" name="imageList" type="string"/>
+      </parameters>
+    </method>
+
+    <method name="PrepareMultipartRelated" static="true">
+      <help>Save the images to include in the email in the database</help>
+      <parameters>
+        <param desc="List of images" inout="in" name="imageList" type="DOMElement"/>
+        <param desc="Forces image inclusion" inout="in" name="embedImages" optional="true"
+               type="boolean"/>
+      </parameters>
+    </method>
+
+    <method library="nms:delivery.js" name="PreviewExtraction" static="true">
+      <help>Preview of the extraction file</help>
+      <parameters>
+        <param desc="File name" inout="in" name="fileName" type="string"/>
+        <param desc="Number of lines" inout="in" name="nbLines" type="int"/>
+        <param desc="Result" inout="out" name="result" type="string"/>
+      </parameters>
+    </method>
+
+    <method name="DeployTriggerMessages" static="true">
+      <help>Publish the selected transactional messages on the execution instances</help>
+      <parameters>
+        <param desc="Filter conditions for defining the transactional messages to deploy"
+               inout="in" name="deliveries" type="DOMElement"/>
+        <param desc="Publish on the control instance only?" inout="in" name="localPublish"
+               type="boolean"/>
+      </parameters>
+    </method>
+
+    <method library="nms:messageCenter.js" name="DeployTriggerMessageSingle" static="true">
+      <help>Publish the transactional message on execution instances. Returns true if the publication is successful and false if not.</help>
+      <parameters>
+        <param desc="ID of the delivery to deploy" inout="in" name="deliveryId" type="long"/>
+        <param desc="Publish on the control instance only?" inout="in" name="localPublish"
+               type="boolean"/>
+        <param desc="Publication complete" inout="out" name="isSuccess" type="boolean"/>
+      </parameters>
+    </method>
+
+    <method library="nms:messageCenter.js" name="RecallTriggerMessages" static="true">
+      <help>Unpublish the transactional message from the execution instances. Returns true if the unpublication is successful on all enabled exec instances and false if not.</help>
+      <parameters>
+        <param desc="ID of the delivery to recall" inout="in" name="deliveryId" type="int"/>
+        <param desc="Unpublish on the control instance only?" inout="in" name="localPublish"
+               type="boolean"/>
+        <param desc="Unpublication complete" inout="out" name="isSuccess" type="boolean"/>
+      </parameters>
+    </method>
+
+    <method library="nms:messageCenter.js" name="InstallTransactionalMessage" static="true">
+      <help>Install a transactional message template on the execution instance.</help>
+      <parameters>
+        <param desc="XML element containing the package to be imported." name="parameters"
+               type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method library="nms:messageCenter.js" name="UninstallTransactionalMessage" static="true">
+      <help>Uninstall/Delete a transactional message template on the execution instance.</help>
+      <parameters>
+        <param desc="Internal Name of template on the control instance " name="internalName"
+               type="string"/>
+      </parameters>
+    </method>
+
+    <method name="GetMidXtkKey" static="true">
+      <help>Returns the Xtk key of the mid server</help>
+      <parameters>
+        <param desc="Key" inout="out" name="key" type="string"/>
+      </parameters>
+    </method>
+
+    <method hidden="true" library="nms:amcIntegration.js" name="aemListContent" static="true">
+      <parameters>
+        <param desc="Internal name of the delivery" inout="in" name="deliveryName"
+               type="string"/>
+        <param desc="AEM external account ID" inout="in" name="cmsAccountId" type="long"/>
+        <param desc="Search in the label" inout="in" name="searchLabel" type="string"/>
+        <param desc="Filter by status" inout="in" name="status" type="string"/>
+        <param desc="Filter by links" inout="in" name="linking" type="string"/>
+        <param desc="Sort type" inout="in" name="sort" type="string"/>
+        <param desc="Number of elements to return" inout="in" name="count" type="long"/>
+        <param desc="Position of first element" inout="in" name="offset" type="long"/>
+        <param inout="out" name="list" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method hidden="true" library="nms:amcIntegration.js" name="aemLinkContent" static="true">
+      <parameters>
+        <param desc="Delivery" inout="in" name="delivery" type="DOMElement"/>
+        <param desc="Content path" inout="in" name="path" type="string"/>
+        <param desc="Contents" inout="out" name="content" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method hidden="true" library="nms:amcIntegration.js" name="aemUnlinkContent"
+            static="true">
+      <parameters>
+        <param desc="Delivery" inout="in" name="delivery" type="DOMElement"/>
+        <param desc="Desynchronization successful." inout="out" name="success" type="boolean"/>
+      </parameters>
+    </method>
+
+    <method hidden="true" library="nms:amcIntegration.js" name="aemGetContent" static="true">
+      <parameters>
+        <param desc="Delivery" inout="in" name="delivery" type="DOMElement"/>
+        <param desc="Contents" inout="out" name="content" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method name="BuildTargetDataSchema" static="true">
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="string"/>
+        <param desc="'targetData' schema" inout="out" name="schema" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method library="nms:delivery.js" name="GetSeedList" static="true">
+      <parameters>
+        <param inout="in" name="did" type="long"/>
+        <param inout="in" name="cuid" type="string"/>
+        <param inout="in" name="deviceList" type="DOMElement"/>
+        <param inout="out" name="data" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method library="nms:delivery.js" name="GetDeviceList" static="true">
+      <parameters>
+        <param inout="in" name="cuid" type="string"/>
+        <param inout="out" name="data" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method name="IsFfda" static="true">
+      <help>If this delivery is in full fda mode</help>
+      <parameters>
+        <param desc="Delivery identifier" inout="in" name="deliveryId" type="long"/>
+        <param desc="Is Full FDA delivery" inout="out" name="IsFfda" type="boolean"/>
+      </parameters>
+    </method>
+
+    <method name="CheckSMSConnector" static="true">
+      <help>Check that the mid SMS external account is correctly configured. In case of FFDA, check that it is using the extended generic SMPP connector</help>
+      <parameters>
+        <param desc="Name of the external account to check" inout="in" name="name"
+               type="string"/>
+        <param desc="Are we in the context of FFDA ?" inout="in" name="IsFfda" type="boolean"/>
+        <param desc="Is it correctly configured ?" inout="out" name="IsValid" type="boolean"/>
+      </parameters>
+    </method>
+  </methods>
+
+</srcSchema>

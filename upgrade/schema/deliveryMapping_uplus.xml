@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+uplus.deliveryMapping (타겟 매핑 — UPLUS 레거시 MMS 주소 필드 확장)
+==================================================================
+nms:deliveryMapping 확장. messageType enum name 과 동일 attribute (custmms, lgu_mms).
+Console uplus:deliveryMapping 덮어쓰기 복구용 — repo SSOT.
+
+근거: default/inputForm/deliveryMapping.xml Address 탭
+  - @custmms  → [ON] LMS/MMS(new)  (messageType custmms)
+  - @lgu_mms  → [ON] LMS/MMS       (messageType lgu_mms)
+
+[Main Functions]
+===========
+- @custmms: UPLUS LMS/MMS(new) 수신 주소 xpath
+- @lgu_mms: UPLUS LMS/MMS 수신 주소 xpath
+
+[Dependencies]
+=========
+- nms:deliveryMapping (extendedSchema)
+- uplus:delivery (content/custmms, content/lgu_mms)
+-->
+<srcSchema _cs="Target mapping (uplus)" created="2026-09-09 07:25:00.000Z" createdBy-id="0"
+           desc="UPLUS legacy MMS channel address mapping for target mapping."
+           entitySchema="xtk:srcSchema" extendedSchema="nms:deliveryMapping"
+           img="nms:deliveryTarget.png" label="Target mapping" labelSingular="Target mapping"
+           lastModified="2026-09-09 07:25:00.000Z" mappingType="sql" modifiedBy-id="0"
+           name="deliveryMapping" namespace="uplus" xtkschema="xtk:srcSchema">
+  <createdBy _cs="우해인 (hiwoo)"/>
+  <modifiedBy _cs="우해인 (hiwoo)"/>
+
+  <element label="Target mapping" labelSingular="Target mapping" name="deliveryMapping">
+    <attribute desc="[UPLUS] LMS/MMS(new) delivery address field"
+               label="[ON] LMS/MMS(new)" length="255" name="custmms" sqlname="sCustmms"
+               type="string"/>
+    <attribute desc="[UPLUS] LMS/MMS delivery address field"
+               label="[ON] LMS/MMS" length="255" name="lgu_mms" sqlname="sLguMms"
+               type="string"/>
+  </element>
+</srcSchema>

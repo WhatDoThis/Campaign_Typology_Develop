@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+lgu.delivery (Delivery 피로도 · lguMMS 채널 확장)
+==================================================
+nms:delivery 확장 — lgu 네임스페이스 전용.
+콘텐츠 xpath(content/lguMMS, custmms, lgu_mms 등)는 uplus:delivery 에 정의.
+
+[Main Functions]
+===========
+- messageType lguMMS (101): [LGU] SMS/MMS 커스텀 채널
+- LGU_TARGET_TYPE_M_NO / TYPE_DETAIL: 타겟유형 스냅샷 (Pressure filter)
+- LGU_SUCCESS_METRIC_M_NO / METRIC_NAME: 성공지표 스냅샷
+
+[Dependencies]
+=========
+- nms:delivery (extendedSchema)
+- uplus:delivery (content/* — 별도 Import)
+- lgu:LGU_TARGET_TYPE_M, lgu:LGU_SUCCESS_METRIC_M (선택)
+-->
+<srcSchema _cs="Deliveries (lgu)" created="2026-09-08 02:03:10.945Z" createdBy-id="0"
+           desc="LGU fatigue target type and lguMMS channel extension."
+           entitySchema="xtk:srcSchema" extendedSchema="nms:delivery" img="nms:campaign.png"
+           label="Deliveries" labelSingular="Delivery" lastModified="2026-09-08 07:45:00.000Z"
+           mappingType="sql" md5="36CF35AEFDC9704F7B1BBB0C704F5190" modifiedBy-id="0"
+           name="delivery" namespace="lgu" xtkschema="xtk:srcSchema">
+  <createdBy _cs="우해인 (hiwoo)"/>
+  <modifiedBy _cs="우해인 (hiwoo)"/>
+  <enumeration basetype="byte" name="messageType">
+    <value desc="[LGU] SMS/MMS" img="nms:mobile.png" label="[LGU] SMS/MMS" name="lguMMS"
+           value="101"/>
+  </enumeration>
+
+  <element name="delivery">
+    <attribute label="유형마스터번호" name="LGU_TARGET_TYPE_M_NO" sqlname="LGU_TARGET_TYPE_M_NO"
+               type="long"/>
+    <attribute label="유형내용" length="200" name="TYPE_DETAIL" sqlname="TYPE_DETAIL"
+               type="string"/>
+    <attribute label="성공지표번호" name="LGU_SUCCESS_METRIC_M_NO" sqlname="LGU_SUCCESS_METRIC_M_NO"
+               type="long"/>
+    <attribute label="지표명" length="200" name="METRIC_NAME" sqlname="METRIC_NAME"
+               type="string"/>
+  </element>
+</srcSchema>

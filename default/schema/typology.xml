@@ -1,0 +1,45 @@
+<srcSchema desc="Set of rules to apply to deliveries corresponding to the typology"
+           entitySchema="xtk:srcSchema" genAccessors="false" img="nms:typofolder.png"
+           implements="xtk:persist" label="Typologies" labelSingular="Typology" md5="833CD9AB5ADD6AF34B3A855DBE817F36"
+           name="typology" namespace="nms" xtkschema="xtk:srcSchema">
+
+  <enumeration basetype="byte" default="none" name="type">
+    <value label="Standard" name="none" value="0"/>
+    <value label="Filtering" name="filter" value="1"/>
+  </enumeration>
+
+  <!-- ============
+       Root element
+       ============ -->
+  <element autopk="true" folderModel="nmsTypology" fullLoad="true" img="nms:typofolder.png"
+           name="typology" pkgAdmin="@id != 0">
+    <compute-string expr="@label"/>
+
+    <key name="name">
+      <keyfield xpath="@name"/>
+    </key>
+
+    <attribute default="GetOption('XtkInstancePrefix')+'TY'+CounterValue('nmsTypology')"
+               name="name" template="xtk:common:name"/>
+    <attribute name="label" template="xtk:common:label"/>
+    <element name="desc" template="xtk:common:desc"/>
+    <attribute desc="Typology type" enum="type" label="Type" name="type" type="byte"/>
+
+    <attribute desc="Enables you to associate the typology with an affinity for the IP addresses used to deliver the emails."
+               label="IP affinity" length="64" name="IPAffinity" type="string" userEnum="IPAffinity"/>
+
+    <element aggregate="xtk:common:auditTrail" name="auditTrail"/>
+
+    <element desc="Typology folder" label="Folder" name="folder" required="true"
+             revDesc="Typologies contained in this folder" revIntegrity="define"
+             revLabel="Typologies" target="xtk:folder" type="link"/>
+
+    <!-- central local -->
+    <element applicableIf="HasPackage('nms:centralLocal')" label="Organizational entity"
+             name="localOrgUnit" revIntegrity="define" target="nms:localOrgUnit"
+             type="link"/>
+    <element applicableIf="HasPackage('nms:centralLocal')" label="Associated central typology"
+             name="centralTypology" revIntegrity="define" target="nms:typology" type="link"/>
+  </element>
+
+</srcSchema>

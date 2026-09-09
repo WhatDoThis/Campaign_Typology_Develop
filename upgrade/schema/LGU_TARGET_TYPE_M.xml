@@ -1,0 +1,31 @@
+<srcSchema _cs="[LGU] 타겟유형마스터 (lgu)" created="2026-09-08 00:56:01.880Z" createdBy-id="0"
+           entitySchema="xtk:srcSchema" img="xtk:schema.png" label="[LGU] 타겟유형마스터"
+           lastModified="2026-09-08 01:00:59.778Z" mappingType="sql" md5="1B5A41ED5D3C25D21F3FC087C0E2135A"
+           modifiedBy-id="0" name="LGU_TARGET_TYPE_M" namespace="lgu" xtkschema="xtk:srcSchema">
+  <createdBy _cs="우해인 (hiwoo)"/>
+  <modifiedBy _cs="우해인 (hiwoo)"/>
+  
+  <!-- LGU Stage 에서 가져온 스키마 - 원작자: 권대희 -->
+  <enumeration basetype="string" label="사용여부" name="USE_YN">
+    <value desc="사용" label="사용" name="Y" value="Y"/>
+    <value desc="미사용" label="미사용" name="N" value="N"/>
+  </enumeration>
+
+  <enumeration basetype="string" label="사용여부" name="USE_YN">
+    <value desc="사용" label="사용" name="Y" value="Y"/>
+    <value desc="미사용" label="미사용" name="N" value="N"/>
+  </enumeration>
+
+  <element label="[LGU] 타겟유형마스터" name="LGU_TARGET_TYPE_M" sqltable="LGU_TARGET_TYPE_M">
+    <attribute label="마스터번호" name="NO" sqlname="NO" type="long"/>
+    <attribute label="유형내용" length="200" name="TYPE_DETAIL" sqlname="TYPE_DETAIL"
+               type="string"/>
+    <attribute enum="USE_YN" label="AI모델사용여부" length="1" name="AI_MODEL_USE_YN" sqlname="AI_MODEL_USE_YN"
+               type="string"/>
+    <attribute label="생성일시" name="INSERT_DTM" sqlname="INSERT_DTM" type="datetime"/>
+    <attribute label="수정일시" name="UPDATE_DTM" sqlname="UPDATE_DTM" type="datetime"/>
+    <key label="타겟유형마스터PK" name="LGU_TARGET_TYPE_M_PK">
+      <keyfield xpath="@NO"/>
+    </key>
+  </element>
+</srcSchema>

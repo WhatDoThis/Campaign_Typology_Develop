@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+REFERENCE — Phase 0 Console Export로 교체.
+TOTAL: filter 없음. Channel [LGU] SMS/MMS (messageType=101)
+-->
+<typologyRule _operation="insertOrUpdate" _key="@name"
+               active="true" forceOnPrepareMessage="true" validity="0"
+               label="[LGU] SMS/MMS Type All (template)" messageType="101"
+               name="RLSmsMmsAll" order="10" ruleType="businessRanking"
+               schema="nms:recipient" xtkschema="nms:typologyRule">
+  <businessRanking activeForecast="true" boxingUnit="0"
+                   periodRanking="7d" threshold="10" thresholdType="0">
+    <weightFormula>5</weightFormula>
+  </businessRanking>
+</typologyRule>

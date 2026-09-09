@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+lgu.deliveryMapping (타겟 매핑 — lguMMS 주소 필드 확장)
+==========================================================
+nms:deliveryMapping 확장. messageType enum name(lguMMS)과 동일한 attribute 추가.
+Prepare/발송 시 broadLog @address 해석에 사용 (recipient xpath 저장).
+
+[Main Functions]
+===========
+- @lguMMS: [LGU] SMS/MMS 채널 수신 주소 xpath (예: @mobilePhone)
+
+[Endpoints/Classes/Functions]
+=======================
+- attribute lguMMS: deliveryMapping element 확장
+
+[Dependencies]
+=========
+- nms:deliveryMapping (extendedSchema)
+- lgu:delivery:messageType lguMMS (101)
+- uplus:deliveryMapping (custmms, lgu_mms — 별도 Import, 선행)
+-->
+<srcSchema _cs="Target mapping (lgu)" created="2026-09-09 07:05:00.000Z" createdBy-id="0"
+           desc="LGU lguMMS channel address mapping for target mapping."
+           entitySchema="xtk:srcSchema" extendedSchema="nms:deliveryMapping"
+           img="nms:deliveryTarget.png" label="Target mapping" labelSingular="Target mapping"
+           lastModified="2026-09-09 07:05:00.000Z" mappingType="sql" modifiedBy-id="0"
+           name="deliveryMapping" namespace="lgu" xtkschema="xtk:srcSchema">
+  <createdBy _cs="우해인 (hiwoo)"/>
+  <modifiedBy _cs="우해인 (hiwoo)"/>
+
+  <element label="Target mapping" labelSingular="Target mapping" name="deliveryMapping">
+    <attribute desc="[LGU] SMS/MMS delivery address field on targeting dimension"
+               label="[LGU] SMS/MMS" length="255" name="lguMMS" sqlname="sLguMMS"
+               type="string"/>
+  </element>
+</srcSchema>

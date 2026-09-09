@@ -1,0 +1,369 @@
+<form entity-schema="nms:deliveryMapping" entitySchema="xtk:form" img="nms:deliveryTarget.png"
+      label="New target mapping" maxLabelWidth="50" md5="14F053030F8AAC3D5C21CABF7EE2911B"
+      name="newDlvMapping" namespace="nms" type="wizard" xtkschema="xtk:form">
+  <enter>
+    <set expr="mappingSchemaExt(@schema)" xpath="/ignored/@dummySchema"/>
+    <set value="0" xpath="/ignored/@longLinkToMapping"/>
+    <set value="true" xpath="/ignored/@newDlvMapping"/>
+  </enter>
+  <container desc="Enter the label of the targeting dimension and specify the schema linked to the targeted population."
+             title="Select targeting dimension">
+    <container ref="nms:deliveryMapping:tabGene"/>
+    <leave>
+      <set value="nms:deliveryMapping" xpath="/ignored/queryDef/@schema"/>
+      <set value="getIfExists" xpath="/ignored/queryDef/@operation"/>
+      <set value="@id" xpath="/ignored/queryDef/select/node[1]/@expr"/>
+      <set value="@email" xpath="/ignored/queryDef/select/node[2]/@expr"/>
+      <set value="@sms" xpath="/ignored/queryDef/select/node[3]/@expr"/>
+      <set value="@phone" xpath="/ignored/queryDef/select/node[4]/@expr"/>
+      <set value="@fax" xpath="/ignored/queryDef/select/node[5]/@expr"/>
+      <set value="@blackListEmail" xpath="/ignored/queryDef/select/node[6]/@expr"/>
+      <set value="@blackListSms" xpath="/ignored/queryDef/select/node[7]/@expr"/>
+      <set value="@blackListPhone" xpath="/ignored/queryDef/select/node[8]/@expr"/>
+      <set value="@blackListFax" xpath="/ignored/queryDef/select/node[9]/@expr"/>
+      <set value="@blackListPaper" xpath="/ignored/queryDef/select/node[10]/@expr"/>
+      <set value="@blackListAgency" xpath="/ignored/queryDef/select/node[11]/@expr"/>
+      <set value="[storage/@broadLogSchema]" xpath="/ignored/queryDef/select/node[12]/@expr"/>
+      <set value="[storage/@exclusionType]" xpath="/ignored/queryDef/select/node[13]/@expr"/>
+      <set value="[storage/@broadLogExclSchema]" xpath="/ignored/queryDef/select/node[14]/@expr"/>
+      <set value="[storage/@trackingLogSchema]" xpath="/ignored/queryDef/select/node[15]/@expr"/>
+      <set expr="'@schema=\''+ GetLinkSchema(@schema, @recipientLink) + '\' AND @recipientLink=\'\''"
+           xpath="/ignored/queryDef/where/condition/@expr"/>
+      <soapCall name="ExecuteQuery" service="xtk:queryDef">
+        <param exprIn="[/ignored/queryDef]" type="DOMDocument"/>
+        <param type="DOMDocument" xpathOut="/tmp/mainMapping"/>
+      </soapCall>
+
+      <if expr="[/tmp/mainMapping/@id]!=0 AND ([/tmp/targetPackage/@mobileApp]=0 OR [/tmp/targetPackage/@mobileApp]='')">
+        <set expr="Iif( substring(Lower([/tmp/mainMapping/@email]), 0, 6) = 'lower(', 'lower(' + ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath(substring([/tmp/mainMapping/@email], 6, strlen([/tmp/mainMapping/@email])-7)))) + ')', '')"
+             xpath="@email"/>
+        <set expr="ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath([/tmp/mainMapping/@sms])))"
+             xpath="@sms"/>
+        <set expr="ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath([/tmp/mainMapping/@phone])))"
+             xpath="@phone"/>
+        <set expr="ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath([/tmp/mainMapping/@fax])))"
+             xpath="@fax"/>
+        <set expr="Iif(IndexOf([/tmp/mainMapping/@blackListEmail], '(')&gt;=0, '', ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath([/tmp/mainMapping/@blackListEmail]))))"
+             xpath="@blackListEmail"/>
+        <set expr="Iif(IndexOf([/tmp/mainMapping/@blackListSms], '(')&gt;=0, '', ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath([/tmp/mainMapping/@blackListSms]))))"
+             xpath="@blackListSms"/>
+        <set expr="Iif(IndexOf([/tmp/mainMapping/@blackListPhone], '(')&gt;=0, '', ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath([/tmp/mainMapping/@blackListPhone]))))"
+             xpath="@blackListPhone"/>
+        <set expr="Iif(IndexOf([/tmp/mainMapping/@blackListFax], '(')&gt;=0, '', ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath([/tmp/mainMapping/@blackListFax]))))"
+             xpath="@blackListFax"/>
+        <set expr="Iif(IndexOf([/tmp/mainMapping/@blackListPaper], '(')&gt;=0, '', ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath([/tmp/mainMapping/@blackListPaper]))))"
+             xpath="@blackListPaper"/>
+        <set expr="Iif(IndexOf([/tmp/mainMapping/@blackListAgency], '(')&gt;=0, '', ExpandXPath(ConcatXPath(UnExpandXPath(@recipientLink), UnExpandXPath([/tmp/mainMapping/@blackListAgency]))))"
+             xpath="@blackListAgency"/>
+        <set expr="[/tmp/mainMapping/storage/@broadLogSchema]" xpath="storage/@broadLogSchema"/>
+        <set expr="Iif([/tmp/mainMapping/storage/@exclusionType]!='', [/tmp/mainMapping/storage/@exclusionType],2)"
+             xpath="storage/@exclusionType"/>
+        <set expr="[/tmp/mainMapping/storage/@broadLogExclSchema]" xpath="storage/@broadLogExclSchema"/>
+        <set expr="[/tmp/mainMapping/storage/@trackingLogSchema]" xpath="storage/@trackingLogSchema"/>
+      </if>
+      <if expr="[/tmp/mainMapping/@id]=0 or [/tmp/mainMapping/@id]=''">
+        <set expr="DefaultNameSpace()" xpath="/tmp/targetPackage/@schemaNamespace"/>
+        <set translatedExpr="'IP identifier'" xpath="/tmp/targetPackage/@publicIdLabel"/>
+        <set translatedExpr="'Segment Code'" xpath="/tmp/targetPackage/@segmentCodeLabel"/>
+        <if expr="FieldExists(GetLinkSchema(@schema, @recipientLink), 'broadLog')">
+          <set expr="GetLinkSchema(GetLinkSchema(@schema, @recipientLink), 'broadLog')"
+               xpath="storage/@broadLogSchema"/>
+        </if>
+        <if expr="FieldExists(GetLinkSchema(@schema, @recipientLink), 'excludeLog')">
+          <set value="2" xpath="storage/@exclusionType"/>
+          <set expr="GetLinkSchema(GetLinkSchema(@schema, @recipientLink), 'excludeLog')"
+               xpath="storage/@broadLogExclSchema"/>
+        </if>
+        <if expr="FieldExists(GetLinkSchema(@schema, @recipientLink), 'excludeLog')=false">
+          <set value="0" xpath="storage/@exclusionType"/>
+        </if>
+        <if expr="FieldExists(GetLinkSchema(@schema, @recipientLink), 'trackingLog')">
+          <set expr="GetLinkSchema(GetLinkSchema(@schema, @recipientLink), 'trackingLog')"
+               xpath="storage/@trackingLogSchema"/>
+        </if>
+      </if>
+      <set expr="IsFullFda(GetSchemaDataSource(@schema))" xpath="@isFfda"/>
+    </leave>
+  </container>
+  <container desc="For each item of information, specify the linked field in the new targeting dimension."
+             title="Edit address forms">
+    <container ref="nms:deliveryMapping:tabMapping/ntbk/tabAddr"/>
+    <container type="visibleGroup" visibleIf="Iif([/tmp/targetPackage/@mobileApp],                                Iif([/tmp/targetPackage/@appSubSchema]='', false, FieldExists(@schema, 'broadLog')),                                FieldExists(GetLinkSchema(@schema, @recipientLink), 'broadLog') )">
+      <static type="help">The 'broadLog' link for storing deliveries already exists, you do not need to create a new storage schema.</static>
+    </container>
+  </container>
+  <container desc="Choose a suffix for all schemas linked to the new targeting dimension, then enter labels for the various schemas."
+             name="storage" title="Storage" visibleIf="Iif([/tmp/targetPackage/@mobileApp],                              Iif([/tmp/targetPackage/@appSubSchema]='', true, FieldExists(@schema, 'broadLog')==false),                              ([/tmp/mainMapping/@id]=0 or [/tmp/mainMapping/@id]='') and FieldExists(GetLinkSchema(@schema, @recipientLink), 'broadLog')==false )">
+    <container type="visibleGroup" visibleIf="[@targetSchema]!=''">
+      <input label="Targeting dimension" readOnly="true" type="schemaEdit" xpath="@targetSchema"/>
+    </container>
+    <container type="visibleGroup" visibleIf="[@targetSchema]=''">
+      <input label="Targeting dimension" readOnly="true" type="schemaEdit" xpath="@schema"/>
+    </container>
+    <input label="Namespace" required="true" xpath="/tmp/targetPackage/@schemaNamespace"/>
+    <input label="Suffix of the extension schemas" required="true" xpath="/tmp/targetPackage/@schemaSuffix"/>
+    <container type="visibleGroup" visibleIf="SchemaExists([/tmp/targetPackage/@schemaNamespace]+':broadLog' + [/tmp/targetPackage/@schemaSuffix])=true OR SchemaExists([/tmp/targetPackage/@schemaNamespace]+':trackingLog' + [/tmp/targetPackage/@schemaSuffix])=true OR SchemaExists([/tmp/targetPackage/@schemaNamespace]+':excludeLog' + [/tmp/targetPackage/@schemaSuffix])=true">
+      <static type="warning">This suffix already exists: data schemas with the same suffix will be overwritten.</static>
+    </container>
+    <static label="Delivery logs" type="separator"/>
+    <input img="xtk:parameters.png" label="Define new additional fields..." nolabel="false"
+           type="subFormLink">
+      <form label="Extension of the delivery logs schema">
+        <input label="Use a 'Segment code' field" type="checkBox" xpath="/tmp/targetPackage/broadLogSchema/@useCodeSegment"/>
+        <input label="Store the identifier of the delivery IP address" type="checkBox"
+               xpath="/tmp/targetPackage/broadLogSchema/@usePublicId"/>
+        <input nolabel="true" toolbarCaption="List of fields to add" type="list"
+               xpath="/tmp/targetPackage/broadLogSchema/element/attribute">
+          <input label="Label" xpath="@label"/>
+          <input label="Name" xpath="@name"/>
+          <input enum="xtk:srcSchema:fieldType" label="Type" type="sysenum" xpath="@type"/>
+          <input label="Size" type="number" xpath="@length"/>
+        </input>
+        <leave>
+          <set value="true" xpath="/tmp/targetPackage/broadLogSchema/@_defined"/>
+        </leave>
+      </form>
+    </input>
+    <container type="visibleGroup" visibleIf="([/tmp/targetPackage/@mobileApp]=0 OR [/tmp/targetPackage/@mobileApp]='')">
+      <static label="Exclusions" type="separator"/>
+      <input checkedValue="0" label="Store exclusions and messages in the same table"
+             type="radioButton" xpath="storage/@exclusionType"/>
+      <input checkedValue="1" label="Store messages only" type="radioButton" xpath="storage/@exclusionType"/>
+      <input checkedValue="2" label="Store exclusions and messages in separate tables"
+             type="radioButton" xpath="storage/@exclusionType"/>
+      <container type="visibleGroup" visibleIf="[storage/@exclusionType]=2">
+        <input label="Use the same additional columns as delivery logs" type="checkbox"
+               xpath="/tmp/targetPackage/@excludeExtension"/>
+      </container>
+    </container>
+    <static label="Tracking" type="separator"/>
+    <input label="Generate a storage schema for tracking" type="checkBox" xpath="/tmp/targetPackage/@tracking"/>
+    <container type="visibleGroup" visibleIf="[/tmp/targetPackage/@tracking]=true">
+      <input label="Store the IP address in the tracking logs" type="checkBox" xpath="/tmp/targetPackage/trackingLogSchema/@useDeviceIp"/>
+    </container>
+    <leave>
+      <check expr="[/tmp/targetPackage/@schemaNamespace]!=''">
+        <error>Please define the namespace to be used for schema generation.</error>
+      </check>
+      <check expr="[/tmp/targetPackage/@schemaNamespace]!='nms' AND [/tmp/targetPackage/@schemaNamespace]!='nl' AND [/tmp/targetPackage/@schemaNamespace]!='ncm' AND [/tmp/targetPackage/@schemaNamespace]!='crm' AND [/tmp/targetPackage/@schemaNamespace]!='xxl' AND [/tmp/targetPackage/@schemaNamespace]!='xtk'">
+        <error>Please define a namespace that does not conflict with the out-of-the-box namespaces (nms, nl, crm, ncm, xtk).</error>
+      </check>
+    </leave>
+  </container>
+  <container desc="Choose the extensions to be taken into account." name="extension"
+             title="Extensions" visibleIf="Iif([/tmp/targetPackage/@mobileApp],                              Iif([/tmp/targetPackage/@appSubSchema]='', true, FieldExists(@schema, 'broadLog')==false),                              ([/tmp/mainMapping/@id]=0 or [/tmp/mainMapping/@id]='') and FieldExists(GetLinkSchema(@schema, @recipientLink), 'broadLog')==false )">
+    <container type="visibleGroup" visibleIf="[@targetSchema]!=''">
+      <input label="Targeting dimension" readOnly="true" type="schemaEdit" xpath="@targetSchema"/>
+    </container>
+    <container type="visibleGroup" visibleIf="[@targetSchema]=''">
+      <input label="Targeting dimension" readOnly="true" type="schemaEdit" xpath="@schema"/>
+    </container>
+    <input label="Suffix of the extension schemas" readOnly="true" xpath="/tmp/targetPackage/@schemaSuffix"/>
+    <container applicableIf="HasPackage('nms:coreInteraction')" name="coreInteraction">
+      <static label="Offer engine" type="separator"/>
+      <input label="Generate a storage schema for propositions" type="checkBox" xpath="/tmp/targetPackage/@offer"/>
+      <container type="visibleGroup" visibleIf="[/tmp/targetPackage/@offer]=true">
+        <input img="xtk:parameters.png" label="Specify additional fields..." nolabel="false"
+               prebuildSubForm="false" type="subFormLink" xpath=".">
+          <form label="Extension of the propositions schema">
+            <enter>
+              <if expr="[/tmp/targetPackage/propositionSchema/element/@name]=='' AND [/tmp/targetPackage/@schemaExtNamespace]!='' AND SchemaExists([/tmp/targetPackage/@schemaNamespace]+':proposition'+[/tmp/targetPackage/@schemaSuffix])">
+                <set value="xtk:srcSchema" xpath="/tmp/schemaQueryDef/@schema"/>
+                <set value="getIfExists" xpath="/tmp/schemaQueryDef/@operation"/>
+                <set value="data" xpath="/tmp/schemaQueryDef/select/node/@expr"/>
+                <set value="true" xpath="/tmp/schemaQueryDef/select/node/@anyType"/>
+                <set expr="'@name=\'proposition' + [/tmp/targetPackage/@schemaSuffix] + '\' and @namespace=\'' + [/tmp/targetPackage/@schemaExtNamespace] + '\''"
+                     xpath="/tmp/schemaQueryDef/where/condition/@expr"/>
+                <soapCall name="ExecuteQuery" service="xtk:queryDef">
+                  <param exprIn="[/tmp/schemaQueryDef]" type="DOMDocument"/>
+                  <param type="DOMDocument" xpathOut="/tmp/targetPackage/propositionSchema"/>
+                </soapCall>
+              </if>
+            </enter>
+            <input nolabel="true" toolbarCaption="List of fields to add" type="list"
+                   xpath="/tmp/targetPackage/propositionSchema/element/attribute">
+              <input label="Label" xpath="@label"/>
+              <input label="Name" xpath="@name"/>
+              <input enum="xtk:srcSchema:fieldType" label="Type" type="sysenum" xpath="@type"/>
+              <input label="Size" type="number" xpath="@length"/>
+            </input>
+            <leave>
+              <set value="true" xpath="/tmp/targetPackage/propositionSchema/@_defined"/>
+            </leave>
+          </form>
+        </input>
+      </container>
+    </container>
+    <container applicableIf="HasPackage('nms:response')" name="response">
+      <static label="Reaction management" type="separator"/>
+      <input label="Generate a storage schema for reactions" type="checkBox" xpath="/tmp/targetPackage/@reaction"/>
+      <container type="visibleGroup" visibleIf="[/tmp/targetPackage/@reaction]=true">
+        <input img="xtk:parameters.png" label="Specify additional fields..." nolabel="false"
+               prebuildSubForm="false" type="subFormLink" xpath=".">
+          <form label="Extension of the reactions schema">
+            <enter>
+              <if expr="[/tmp/targetPackage/reactionSchema/element/@name]=='' AND [/tmp/targetPackage/@schemaExtNamespace]!='' AND SchemaExists([/tmp/targetPackage/@schemaNamespace]+':reaction'+[/tmp/targetPackage/@schemaSuffix])">
+                <set value="xtk:srcSchema" xpath="/tmp/schemaQueryDef/@schema"/>
+                <set value="getIfExists" xpath="/tmp/schemaQueryDef/@operation"/>
+                <set value="data" xpath="/tmp/schemaQueryDef/select/node/@expr"/>
+                <set value="true" xpath="/tmp/schemaQueryDef/select/node/@anyType"/>
+                <set expr="'@name=\'remaMatch' + [/tmp/targetPackage/@schemaSuffix] + '\' and @namespace=\'' + [/tmp/targetPackage/@schemaExtNamespace] + '\''"
+                     xpath="/tmp/schemaQueryDef/where/condition/@expr"/>
+                <soapCall name="ExecuteQuery" service="xtk:queryDef">
+                  <param exprIn="[/tmp/schemaQueryDef]" type="DOMDocument"/>
+                  <param type="DOMDocument" xpathOut="/tmp/targetPackage/reactionSchema"/>
+                </soapCall>
+              </if>
+            </enter>
+            <input label="Transactions schema" type="schemaEdit" xpath="/tmp/targetPackage/reactionSchema/element/element/@target"/>
+            <input nolabel="true" toolbarCaption="List of fields to add" type="list"
+                   xpath="/tmp/targetPackage/reactionSchema/element/attribute">
+              <input label="Label" xpath="@label"/>
+              <input label="Name" xpath="@name"/>
+              <input enum="xtk:srcSchema:fieldType" label="Type" type="sysenum" xpath="@type"/>
+              <input label="Size" type="number" xpath="@length"/>
+            </input>
+            <leave>
+              <set value="true" xpath="/tmp/targetPackage/reactionSchema/@_defined"/>
+              <if expr="[/tmp/targetPackage/reactionSchema/element/element/@target]=''">
+                <reset delete="true" xpath="/tmp/targetPackage/reactionSchema/element/element"/>
+              </if>
+              <if expr="[/tmp/targetPackage/reactionSchema/element/element/@target]!=''">
+                <set value="link" xpath="/tmp/targetPackage/reactionSchema/element/element/@type"/>
+                <set expr="ExtractRight([/tmp/targetPackage/reactionSchema/element/element/@target], ':')"
+                     xpath="/tmp/targetPackage/reactionSchema/element/element/@name"/>
+              </if>
+            </leave>
+          </form>
+        </input>
+      </container>
+      <input expr="Iif([/tmp/targetPackage/@reaction], 1, NodeValue('/tmp/targetPackage/@offer'))"
+             type="expr" xpath="/tmp/targetPackage/@offer"/>
+    </container>
+    <container applicableIf="HasPackage('nms:survey')" name="survey">
+      <static label="Online surveys" type="separator"/>
+      <input label="Generate a storage schema for answers to surveys" type="checkBox"
+             xpath="/tmp/targetPackage/@survey"/>
+      <container type="visibleGroup" visibleIf="[/tmp/targetPackage/@survey]">
+        <input img="xtk:parameters.png" label="Specify additional fields..." nolabel="false"
+               prebuildSubForm="false" type="subFormLink" xpath=".">
+          <form label="Extension of the survey response schema">
+            <enter>
+              <if expr="[/tmp/targetPackage/webAppLogSchema/element/@name]=='' AND [/tmp/targetPackage/@schemaExtNamespace]!='' AND SchemaExists([/tmp/targetPackage/@schemaNamespace]+':webAppLog'+[/tmp/targetPackage/@schemaSuffix])">
+                <set value="xtk:srcSchema" xpath="/tmp/schemaQueryDef/@schema"/>
+                <set value="getIfExists" xpath="/tmp/schemaQueryDef/@operation"/>
+                <set value="data" xpath="/tmp/schemaQueryDef/select/node/@expr"/>
+                <set value="true" xpath="/tmp/schemaQueryDef/select/node/@anyType"/>
+                <set expr="'@name=\'webAppLog' + [/tmp/targetPackage/@schemaSuffix] + '\' and @namespace=\'' + [/tmp/targetPackage/@schemaExtNamespace] + '\''"
+                     xpath="/tmp/schemaQueryDef/where/condition/@expr"/>
+                <soapCall name="ExecuteQuery" service="xtk:queryDef">
+                  <param exprIn="[/tmp/schemaQueryDef]" type="DOMDocument"/>
+                  <param type="DOMDocument" xpathOut="/tmp/targetPackage/webAppLogSchema"/>
+                </soapCall>
+              </if>
+            </enter>
+            <input nolabel="true" toolbarCaption="List of fields to add" type="list"
+                   xpath="/tmp/targetPackage/webAppLogSchema/element/attribute">
+              <input label="Label" xpath="@label"/>
+              <input label="Name" xpath="@name"/>
+              <input enum="xtk:srcSchema:fieldType" label="Type" type="sysenum" xpath="@type"/>
+              <input label="Size" type="number" xpath="@length"/>
+            </input>
+            <leave>
+              <set value="true" xpath="/tmp/targetPackage/webAppLogSchema/@_defined"/>
+            </leave>
+          </form>
+        </input>
+      </container>
+    </container>
+    <container applicableIf="HasPackage('nms:centralLocal')" name="distributed">
+      <static label="Distributed marketing" type="separator"/>
+      <input label="Generate a storage schema for approvals" type="checkBox" xpath="/tmp/targetPackage/@valid"/>
+    </container>
+  </container>
+  <leave>
+    <check expr="[storage/@broadLogSchema]!='' OR ([/tmp/targetPackage/@schemaNamespace]!='' AND [/tmp/targetPackage/@schemaSuffix]!='')">
+      <error>Please define the name space and the suffix to be used for schema generation.</error>
+    </check>
+    <check expr="[/tmp/targetPackage/@schemaNamespace]!='nms' AND [/tmp/targetPackage/@schemaNamespace]!='nl' AND [/tmp/targetPackage/@schemaNamespace]!='ncm' AND [/tmp/targetPackage/@schemaNamespace]!='crm' AND [/tmp/targetPackage/@schemaNamespace]!='xxl' AND [/tmp/targetPackage/@schemaNamespace]!='xtk'">
+      <error>Please define a namespace that does not conflict with the out-of-the-box namespaces (nms, nl, crm, ncm, xtk).</error>
+    </check>
+    <if expr="[storage/@broadLogSchema]=''">
+      <set expr="@id" xpath="/tmp/targetPackage/@id"/>
+      <set expr="@label" xpath="/tmp/targetPackage/@label"/>
+      <set expr="@targetSchema" xpath="/tmp/targetPackage/@targetSchema"/>
+      <set expr="[storage/@exclusionType]" xpath="/tmp/targetPackage/@exclusionType"/>
+      <soapCall name="CreateCustomTarget" service="nms:deliveryMapping">
+        <param exprIn="@schema" type="string"/>
+        <param exprIn="[/tmp/targetPackage]" type="DOMDocument"/>
+      </soapCall>
+    </if>
+    <if expr="[/tmp/mainMaping/@id]=0 or [/tmp/mainMapping/@id]=''">
+      <set expr="[/tmp/targetPackage/@schemaNamespace] + ':broadLog' + [/tmp/targetPackage/@schemaSuffix]"
+           xpath="storage/@broadLogSchema"/>
+      <if expr="[storage/@exclusionType]=2">
+        <set expr="[/tmp/targetPackage/@schemaNamespace] + ':excludeLog' + [/tmp/targetPackage/@schemaSuffix]"
+             xpath="storage/@broadLogExclSchema"/>
+      </if>
+      <if expr="[/tmp/targetPackage/@tracking]">
+        <set expr="[/tmp/targetPackage/@schemaNamespace] + ':trackingLog' + [/tmp/targetPackage/@schemaSuffix]"
+             xpath="storage/@trackingLogSchema"/>
+
+        <!-- Set default origin delivery created from the CreateCustomTarget -->
+        <set value="nms:delivery" xpath="/ignored/defaultOriginQueryDef/@schema"/>
+        <set value="getIfExists" xpath="/ignored/defaultOriginQueryDef/@operation"/>
+        <set value="@id" xpath="/ignored/defaultOriginQueryDef/select/node[1]/@expr"/>
+        <set expr="'@internalName = \'globalDelivery' + [/tmp/targetPackage/@schemaSuffix] + '\''"
+             xpath="/ignored/defaultOriginQueryDef/where/condition/@expr"/>
+        <soapCall name="ExecuteQuery" service="xtk:queryDef">
+          <param exprIn="[/ignored/defaultOriginQueryDef]" type="DOMDocument"/>
+          <param type="DOMDocument" xpathOut="/tmp/defaultOriginQueryDef"/>
+        </soapCall>
+
+        <set expr="[/tmp/defaultOriginQueryDef/@id]" xpath="@defaultOrigin-id"/>
+      </if>
+    </if>
+
+    <if expr="[/tmp/targetPackage/@mobileApp]">
+      <set value="@disabled" xpath="@blackListIos"/>
+      <set value="@disabled" xpath="@blackListAndroid"/>
+      <set expr="[/tmp/targetPackage/@schemaNamespace]+':broadLogAppSub'+[/tmp/targetPackage/@schemaSuffix]"
+           xpath="storage/@broadLogSchema"/>
+      <set expr="[/tmp/targetPackage/@schemaNamespace]+':excludeLogAppSub'+[/tmp/targetPackage/@schemaSuffix]"
+           xpath="storage/@broadLogExclSchema"/>
+      <if expr="[/tmp/targetPackage/@tracking]==true">
+        <set expr="[/tmp/targetPackage/@schemaNamespace]+':trackingLogAppSub'+[/tmp/targetPackage/@schemaSuffix]"
+             xpath="storage/@trackingLogSchema"/>
+      </if>
+      <set value="[@service-id]" xpath="storage/extraField[1]/@dstXPath"/>
+      <set value="[@service-id]" xpath="storage/extraField[1]/@srcExpr"/>
+      <set value="[@appSubscription-id]" xpath="storage/extraField[2]/@dstXPath"/>
+      <set value="@id" xpath="storage/extraField[2]/@srcExpr"/>
+      <set value="2" xpath="storage/@exclusionType"/>
+
+      <!--Set the generated appSuscription schema as "@schema"-->
+      <if expr="[/tmp/targetPackage/@appSubSchema]=''">
+        <set expr="ExtractRight([/tmp/targetPackage/@targetSchema],':')" xpath="@recipientLink"/>
+        <set expr="[/tmp/targetPackage/@schemaNamespace]+':appSubscription'+[/tmp/targetPackage/@schemaSuffix]"
+             xpath="@schema"/>
+      </if>
+    </if>
+    
+    <!-- call to get target mapping params -->
+    <if expr="HasPackage('xxl:fullfdaMkt')">
+      <soapCall name="GetDeliveryMappingFFDAInfo" service="nms:deliveryMapping">
+        <param exprIn="[.]" type="DOMDocument"/>
+        <param type="DOMDocument" xpathOut="/ignored/storage"/>
+      </soapCall>
+      <!-- Set broadlog related target mapping params -->
+      <set expr="[/ignored/storage/@broadLogTable]" xpath="storage/@broadLogTable"/>
+      <set expr="[/ignored/storage/@broadLogRcpKeys]" xpath="storage/@broadLogRcpKeys"/>
+      <set expr="[/ignored/storage/@broadLogFilterKeys]" xpath="storage/@broadLogFilterKeys"/>
+      <!-- Set tracking related target mapping params -->
+      <set expr="[/ignored/storage/@trackingLogTable]" xpath="storage/@trackingLogTable"/>
+      <set expr="[/ignored/storage/@trackingLogRcpKeys]" xpath="storage/@trackingLogRcpKeys"/>
+      <set expr="[/ignored/storage/@trackingLogFilterKeys]" xpath="storage/@trackingLogFilterKeys"/>
+      <set expr="[/ignored/storage/@trackingHasDeviceIP]" xpath="storage/@trackingHasDeviceIP"/>
+    </if>
+  </leave>
+</form>

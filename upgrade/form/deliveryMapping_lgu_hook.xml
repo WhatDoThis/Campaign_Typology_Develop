@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+lgu.deliveryMapping hook (Target mapping — lguMMS inline input)
+================================================================
+★ Form Import 파일 아님 ★  nms:deliveryMapping Address 탭에 아래 1블록을 직접 붙여넣기.
+
+uplus 패턴과 동일: schema = uplus/lgu namespace, input = nms:deliveryMapping form inline.
+(custmms / lgu_mms 는 lib ref 없이 nms form 에 pathEdit 만 있음 — default/inputForm/deliveryMapping.xml)
+
+[삽입 위치]
+  Form  : nms:deliveryMapping
+  Path  : tabMapping → ntbk → tabAddr
+  Anchor: @lgu_mms 바로 아래, @email 바로 위
+
+[선행 — schema]
+  1. schema/deliveryMapping_uplus.xml → uplus:deliveryMapping
+  2. schema/deliveryMapping_lgu.xml   → lgu:deliveryMapping
+  3. Update database structure
+  4. nms:deliveryMapping Preview → lguMMS attribute 확인
+
+[기존 lgu:deliveryMapping form Import 했으면]
+  Input forms → lgu:deliveryMapping 삭제
+  nms:deliveryMapping 에서 ref="lgu:deliveryMapping:lib/..." 제거
+  → 아래 inline input 으로 교체
+
+[Console Execute — schema vs form 구분]
+  var s = application.getSchema("nms:deliveryMapping");
+  logInfo("custmms=" + (s.root.children["custmms"] ? "OK" : "MISSING"));
+  logInfo("lgu_mms=" + (s.root.children["lgu_mms"] ? "OK" : "MISSING"));
+  logInfo("lguMMS=" + (s.root.children["lguMMS"] ? "OK" : "MISSING"));
+  // lguMMS MISSING → schema 문제 (form 아님)
+  // lguMMS OK + Input forms 미리보기만 에러 → lib form 제거, inline 사용
+-->
+<!-- === nms:deliveryMapping tabAddr 에 붙여넣을 fragment (1줄) === -->
+<!--
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@lguMMS"
+               xpathSchema="/ignored/@dummySchema"/>
+-->

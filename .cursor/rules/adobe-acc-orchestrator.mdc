@@ -1,0 +1,42 @@
+---
+description: Adobe Campaign 요청은 ACC Pipeline Orchestrator 경유 — Reference Validator default
+alwaysApply: true
+---
+
+# Adobe Campaign — Orchestrator 필수
+
+Adobe Campaign(ACC) 관련 **모든** 요청·분석·수정·검증·결과 제공은 **acc-pipeline-orchestrator** 스킬을 따른다.
+
+## 적용 범위
+
+- `campaign/` 하위 JS, schema, form, XML, typologyUpgrade
+- Phase 0/1/2/3, lguFatigueRuleSync, typologyRule, queryDef, Console Execute
+- ACC 오류 로그 해석, 패턴 검증, 사전 실패 예측
+
+## Parent agent 동작
+
+1. `.cursor/skills/acc-pipeline-orchestrator/SKILL.md` 및 `acc-patterns.md` 읽기
+2. **Task subagent**로 Agent 1(Reference Validator) + Agent 2(White-box Tester) **병렬** 실행
+   - **Agent 1 생략 금지** — dual-algorithm (index lookup → discovery) + `acc-reference-index.md` 갱신
+3. Agent 1 **Index delta 검수** (공식 URL·요약 적절성)
+4. BLOCKER/P1–P2 시 Agent 3(Fix Implementer) → Agent 1+2 재검증 (max 3 iterations)
+5. 사용자에게 **ACC Pipeline Result** 형식으로만 최종 제공 (Reference index review 섹션 포함)
+
+## Agent 1 dual-algorithm (orchestrator가 Task prompt에 명시)
+
+| Step | Algorithm | Action |
+|------|-----------|--------|
+| 1 | **2 — Lookup** | `acc-reference-index.md` + `acc-patterns.md` 키워드 검색 |
+| 2 | **1 — Discovery** | MISSING만 Experience League WebSearch/WebFetch |
+| 3 | Index maintain | 새 경로·용도 요약 → `acc-reference-index.md` + Changelog |
+| 4 | Report | Dual-algorithm summary + Index delta → orchestrator 검수 |
+
+## 예외
+
+- 사용자가 `@acc-whitebox-tester` 등 **Agent 2 단독**을 명시한 경우 Agent 2만 실행
+- 사용자가 `@acc-reference-validator` **단독** 명시 시 Agent 1만 (dual-algorithm 필수)
+- Git/설정 등 ACC와 무관한 작업은 이 규칙 제외
+
+## Console PASS
+
+정적 검증만 수행. Console Execute 성공은 사용자 로그로 확인 — orchestrator는 "Expected"로 안내.

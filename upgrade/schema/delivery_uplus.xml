@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+uplus.delivery (Delivery MMS/LMS 레거시 콘텐츠 확장)
+==================================================
+Stage uplus 네임스페이스 — 채널별 content/* 및 paidParameters.
+messageType enum · 피로도·성공지표 SQL 필드는 lgu:delivery 에 정의.
+
+[Main Functions]
+===========
+- content/lguMMS: [CUSTOM] SMS/MMS (deliveryCustomMMS, messageType=lguMMS)
+- content/custmms, content/lgu_mms: [UPLUS] 레거시 MMS form
+- content/lgu_off_inbound_shop: [OFF][매장] In-Bound
+- paidParameters: Paid 세그먼트
+
+[Dependencies]
+=========
+- nms:delivery (extendedSchema)
+- lgu:delivery (messageType, @LGU_TARGET_TYPE_M_NO — 별도 Import)
+-->
+<srcSchema _cs="Deliveries (uplus)" created="2026-06-24 03:17:03.814Z" createdBy-id="0"
+           desc="UPLUS legacy delivery content channels."
+           entitySchema="xtk:srcSchema" extendedSchema="nms:delivery" img="nms:campaign.png"
+           label="Deliveries" labelSingular="Delivery" lastModified="2026-09-09 05:15:00.000Z"
+           mappingType="sql" md5="6D214E29DEA00A6C04F7EA4141A23D3A" modifiedBy-id="0"
+           name="delivery" namespace="uplus" xtkschema="xtk:srcSchema">
+  <createdBy _cs="양성호 (shyang)"/>
+  <modifiedBy _cs="양성호 (shyang)"/>
+
+  <enumeration basetype="string" default="N" name="smsYN">
+    <value label="Y" name="Y" value="Y"/>
+    <value label="N" name="N" value="N"/>
+  </enumeration>
+
+  <enumeration basetype="string" label="발신번호리스트" name="sender_list">
+    <value label="[019-114]모바일-대표번호[자사폰 무료]" name="019-114" value="019-114"/>
+    <value label="[080-019-7000]모바일-대표번호[무료]" name="080-019-7000" value="080-019-7000"/>
+    <value label="[1544-0010]모바일-대표번호[유료]" name="1544-0010" value="1544-0010"/>
+    <value label="[1644-5100]모바일-SAVE/해지방어 상담[유료]" name="1644-5100" value="1644-5100"/>
+    <value label="[1644-7009]모바일-U+Shop[유료]" name="1644-7009" value="1644-7009"/>
+    <value label="[1544-0144]모바일-휴대폰보험/폰케어보상센터[유료]" name="" value="1544-0144"/>
+    <value label="[1644-5108]모바일-분실파손 전담센터[유료]" name="1544-0144" value="1644-5108"/>
+    <value label="[02-3416-7010]모바일-로밍상담[자사폰 무료]" name="02-3416-7010" value="02-3416-7010"/>
+    <value label="[080-850-0130]모바일-선택약정 안내/신청[무료]" name="080-850-0130" value="080-850-0130"/>
+    <value label="[101]홈-대표번호[자사폰 무료]" name="101" value="101"/>
+    <value label="[080-850-4019]홈-SAVE/해지방어 상담[무료]" name="080-850-4019" value="080-850-4019"/>
+    <value label="[1644-7070]홈-U+Shop[유료]" name="1644-7070" value="1644-7070"/>
+    <value label="[1544-0001]기업-대표번호[유료]" name="1544-0001" value="1544-0001"/>
+    <value label="[080-854-7000]홈-대표번호[무료]" name="" value="080-854-7000"/>
+    <value label="[1544-0002]국제전화002안내[유료]" name="1544-0002" value="1544-0002"/>
+    <value label="[080-850-0143]홈-가치제안팀-해지방어상담" name="080-850-0143" value="080-850-0143"/>
+    <value label="[080-850-4007]홈-TV요금제변경 대표번호" name="080-850-4007" value="080-850-4007"/>
+    <value label="[1644-2846]U+Shop2" name="1644-2846" value="1644-2846"/>
+    <value label="[1644-7171]U+Shop3" name="1644-7171" value="1644-7171"/>
+    <value label="[1544-0107]홈IoT전담팀[유료]" name="1544-0107" value="1544-0107"/>
+    <value label="[1644-7010]모바일-결합상품가입팀" name="1644-7010" value="1644-7010"/>
+    <value label="[1644-3905]디지털캠페인 IoT 신규 [유료]" name="1644-3905" value="1644-3905"/>
+    <value label="[1833-9145]일상플러스" name="1833-9145" value="1833-9145"/>
+    <value label="[1833-9219]디지털캠페인 기가업셀 [유료]" name="1833-9219" value="1833-9219"/>
+    <value label="[1833-9265]디지털캠페인 TV 요금제 업셀 [유료]" name="1833-9265" value="1833-9265"/>
+    <value label="[1833-9345]디지털캠페인 TV 월정액 업셀,[유료]" name="1833-9345" value="1833-9345"/>
+    <value label="[1833-9404]디지털캠페인 홈 재약정 [유료]" name="1833-9404" value="1833-9404"/>
+    <value label="[1833-9028]디지털캠페인 가족추천 [유료]" name="1833-9028" value="1833-9028"/>
+    <value label="[1833-9069]디지털캠페인 모바일 해지방어 [유료]" name="1833-9069" value="1833-9069"/>
+    <value label="[1644-6957]디지털캠페인 홈 신규 [유료]" name="1644-6957" value="1644-6957"/>
+    <value label="[1800-1011]U+콕 서비스 고객센터 (유료)" name="1800-1011" value="1800-1011"/>
+    <value label="[1661-0077]소호서비스안내(유료)" name="1661-0077" value="1661-0077"/>
+    <value label="[1661-5807]우리가족상담팀 상담예약" name="1661-5807" value="1661-5807"/>
+    <value label="[1544-3333]모바일고객센터-가구결합가입상담팀 직인입번호" name="1544-3333" value="1544-3333"/>
+    <value label="[1644-9026]제휴사 혜택 맞춤안내 대표번호 (유료)" name="1644-9026" value="1644-9026"/>
+    <value label="[1661-7666]홈유샵 재약정 대표번호[유료]" name="1661-7666" value="1661-7666"/>
+    <value label="[1800-8300]SOHO일반상담" name="1800-8300" value="1800-8300"/>
+    <value label="[1833-4267]스마트메세징(AD커머스) 서비스 대표번호 (유료)" name="1833-4267" value="1833-4267"/>
+    <value label="[080-851-1004]외국인 전용고객센터, 무료" name="080-851-1004" value="080-851-1004"/>
+    <value label="[1833-2315]스마트푸쉬(광고사업단) 서비스 대표번호 (유료)" name="1833-2315" value="1833-2315"/>
+    <value label="[1833-4349]스마트푸쉬(광고사업단) 서비스 대표번호 (유료)" name="1833-4349" value="1833-4349"/>
+    <value label="[1833-5326]멤버스앱 제휴 마케팅 회선" name="1833-5326" value="1833-5326"/>
+    <value label="[1644-7000]홈-대표번호(유료)" name="1644-7000" value="1644-7000"/>
+    <value label="[1660 -1002]아이들나라 고객센터" name="1660-1002" value="1660-1002"/>
+    <value label="[1833-7000]유독 전담상담센터" name="1833-7000" value="1833-7000"/>
+    <value label="[1588-1084]LG헬로비전 렌탈전용" name="1588-1084" value="1588-1084"/>
+    <value label="[1833-2979]U+shop4" name="1833-2979" value="1833-2979"/>
+    <value label="[02-6711-6542]LG생활건강_라이브" name="02-6711-6542" value="02-6711-6542"/>
+    <value label="[070-4069-0101]포동 서비스" name="070-4069-0101" value="070-4069-0101"/>
+    <value label="[1522-8400]기업고객센터 전화팀" name="1522-8400" value="1522-8400"/>
+    <value label="[032-715-6080]하이프라자 파일럿_인천" name="032-715-6080" value="032-715-6080"/>
+    <value label="[031-426-9700]하이프라자 파일럿_안양" name="031-426-9700" value="031-426-9700"/>
+    <value label="[02-6925-5205]하이프라자 파일럿_마포" name="02-6925-5205" value="02-6925-5205"/>
+    <value label="[1800-8000]디지털커뮤니케이션스팀" name="1800-8000" value="1800-8000"/>
+    <value label="[1544-6622]맘대로 폰교체 고객센터" name="1544-6622" value="1544-6622"/>
+    <value label="[1644-0250]학생복지스토어 U+고객센터" name="1644-0250" value="1644-0250"/>
+    <value label="[02-6971-4768]U+ 부산 홈고객센터 기가상향팀" name="02-6971-4768" value="02-6971-4768"/>
+    <value label="[02-6971-4769]U+ 전주 홈고객센터 기가상향팀" name="02-6971-4769" value="02-6971-4769"/>
+    <value label="[1544-9146]U+ 액세서리몰" name="1544-9146" value="1544-9146"/>
+    <value label="[114]U+고객센터[무료]" name="114" value="114"/>
+    <value label="[080-864-1010]유심 전용 고객센터[무료]" name="080-864-1010" value="080-864-1010"/>
+  </enumeration>
+
+  <element name="delivery">
+    <element label="Paid parameters" name="paidParameters" xml="true">
+      <element label="세그먼트명" name="segmentName" type="CDATA"/>
+      <element label="세그먼트No" name="segmentNo" type="CDATA"/>
+      <element label="세그먼트설명" name="description" type="CDATA"/>
+    </element>
+
+    <element label="Content" name="content" xml="true">
+      <element label="[CUSTOM] SMS/MMS 콘텐츠" name="lguMMS" xml="true">
+        <attribute advanced="true" enum="trackingType" expr="0" label="Default URL tracking"
+                   name="trackingType" type="byte" xml="true"/>
+        <attribute advanced="true" enum="nms:trackingUrlInfo:urlType" expr="0" label="Default URL types"
+                   name="urlType" type="byte" xml="true"/>
+        <element desc="Name of the file used the last time this content was loaded."
+                 label="File" name="sourceFile" type="string"/>
+        <element label="Configuration of URLs of the content" name="urlConfig" ref="urlConfig"/>
+        <element label="Configuration of images referenced in the content" name="imageConfig"
+                 ref="imageConfig"/>
+        <element default="' '" label="Content" localizable="true" name="source" type="ANY">
+          <element label="메시지내용" name="MSG" type="CDATA"/>
+          <element label="콜백번호" name="CALLBACK" type="CDATA"/>
+          <element enum="sender_list" label="발신번호" name="SENDER" type="CDATA"/>
+          <element label="수신번호" name="CTN" type="CDATA"/>
+          <element label="고객번호" name="CUST_NO" type="CDATA"/>
+          <element label="가입번호" name="CUST_UNIQ_NO" type="CDATA"/>
+          <element label="이미지경로1" name="RESERVED1" type="CDATA"/>
+          <element label="이미지AssetID1" name="RESERVED_ASSET_ID1" type="CDATA"/>
+          <element label="이미지경로2" name="RESERVED2" type="CDATA"/>
+          <element label="이미지AssetID2" name="RESERVED_ASSET_ID2" type="CDATA"/>
+          <element label="이미지경로3" name="RESERVED3" type="CDATA"/>
+          <element label="이미지AssetID3" name="RESERVED_ASSET_ID3" type="CDATA"/>
+          <element label="제목" name="RESERVED4" type="CDATA"/>
+          <element label="플로우차트ID" name="RESERVED5" type="CDATA"/>
+          <element label="시스템코드" name="SYSTEM_NO" type="CDATA"/>
+          <element label="MessageManagerID" name="MESSAGE_MANAGER_ID" type="CDATA"/>
+        </element>
+      </element>
+
+      <element label="[UPLUS] LMS/MMS content" name="custmms" xml="true">
+        <attribute advanced="true" enum="trackingType" expr="0" label="Default URL tracking"
+                   name="trackingType" type="byte" xml="true"/>
+        <attribute advanced="true" enum="nms:trackingUrlInfo:urlType" expr="''" label="Default URL types"
+                   name="urlType" type="byte" xml="true"/>
+        <element desc="Name of the file used the last time this content was loaded."
+                 label="File" name="sourceFile" type="string"/>
+        <element label="Configuration of URLs of the content" name="urlConfig" ref="urlConfig"/>
+        <element label="Configuration of images referenced in the content" name="imageConfig"
+                 ref="imageConfig"/>
+        <element default="' '" label="Content" localizable="true" name="source" type="ANY">
+          <element label="Subject" name="subject" type="CDATA"/>
+          <element label="Content" name="content" type="CDATA"/>
+          <element label="Content2" length="200" name="content2" type="string"/>
+          <element label="Sender Address" name="senderAddr" type="CDATA"/>
+          <element label="Personal Field" name="personalField" type="CDATA"/>
+          <element label="Personal Value" name="personalValue" type="CDATA"/>
+        </element>
+        <element label="Parameters" name="parameters">
+          <element label="Sender Address" name="senderAddr" type="CDATA"/>
+          <element enum="smsYN" label="smsYN" name="smsYN" type="CDATA"/>
+          <element label="Subject" name="subject" type="CDATA"/>
+          <element label="Content" name="content" type="CDATA"/>
+          <element label="imgUrl1" name="imgUrl1" type="CDATA"/>
+          <element label="imgUrl2" name="imgUrl2" type="CDATA"/>
+          <element label="imgUrl3" name="imgUrl3" type="CDATA"/>
+        </element>
+      </element>
+
+      <element label="[UPLUS] LMS/MMS content" name="lgu_mms" xml="true">
+        <attribute advanced="true" enum="trackingType" expr="0" label="Default URL tracking"
+                   name="trackingType" type="byte" xml="true"/>
+        <attribute advanced="true" enum="nms:trackingUrlInfo:urlType" expr="''" label="Default URL types"
+                   name="urlType" type="byte" xml="true"/>
+        <element desc="Name of the file used the last time this content was loaded."
+                 label="File" name="sourceFile" type="string"/>
+        <element label="Configuration of URLs of the content" name="urlConfig" ref="urlConfig"/>
+        <element label="Configuration of images referenced in the content" name="imageConfig"
+                 ref="imageConfig"/>
+        <element default="' '" label="Content" localizable="true" name="source" type="ANY">
+          <element label="Subject" name="subject" type="CDATA"/>
+          <element label="Content" name="content" type="CDATA"/>
+          <element label="Content2" length="200" name="content2" type="string"/>
+          <element label="Sender Address" name="senderAddr" type="CDATA"/>
+          <element label="Personal Field" name="personalField" type="CDATA"/>
+          <element label="Personal Value" name="personalValue" type="CDATA"/>
+        </element>
+        <element label="Parameters" name="parameters">
+          <element label="Sender Address" name="senderAddr" type="CDATA"/>
+          <element enum="smsYN" label="smsYN" name="smsYN" type="CDATA"/>
+          <element label="Subject" name="subject" type="CDATA"/>
+          <element label="Content" name="content" type="CDATA"/>
+          <element label="imgUrl1" name="imgUrl1" type="CDATA"/>
+          <element label="imgUrl2" name="imgUrl2" type="CDATA"/>
+          <element label="imgUrl3" name="imgUrl3" type="CDATA"/>
+        </element>
+      </element>
+
+      <element label="[UPLUS] [OFF][매장] In-Bound" name="lgu_off_inbound_shop" xml="true">
+        <attribute advanced="true" enum="trackingType" expr="''" label="Default URL tracking"
+                   name="trackingType" type="byte" xml="true"/>
+        <attribute advanced="true" enum="nms:trackingUrlInfo:urlType" expr="''" label="Default URL types"
+                   name="urlType" type="byte" xml="true"/>
+        <element desc="Name of the file used the last time this content was loaded."
+                 label="File" name="sourceFile" type="string"/>
+        <element label="Configuration of URLs of the content" name="urlConfig" ref="urlConfig"/>
+        <element label="Configuration of images referenced in the content" name="imageConfig"
+                 ref="imageConfig"/>
+        <element default="' '" label="Content" localizable="true" name="source" type="ANY"/>
+        <element label="Parameters" name="parameters">
+          <element label="제안TIP" name="suggestion">
+            <element label="Carousel" name="carousel" xml="true">
+              <element label="Carousel Item" name="carouselItem" ordered="true" unbound="true"
+                       xml="true">
+                <attribute default="ColLabel()" label="Label(Header)" length="20"
+                           name="label" translatedDefault="'제안TIP'" type="string"/>
+                <element label="Content" name="content" type="CDATA"/>
+              </element>
+            </element>
+          </element>
+          <element label="반론TIP" name="ojection">
+            <element label="Carousel" name="carousel" xml="true">
+              <element label="Carousel Item" name="carouselItem" ordered="true" unbound="true"
+                       xml="true">
+                <attribute default="ColLabel()" label="Label(Header)" length="20"
+                           name="label" translatedDefault="'반론TIP'" type="string"/>
+                <element label="Content" name="content" type="CDATA"/>
+              </element>
+            </element>
+          </element>
+        </element>
+      </element>
+    </element>
+  </element>
+</srcSchema>

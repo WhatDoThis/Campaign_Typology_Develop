@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+lgu.LGU_TARGET_TYPE_FATIGUE_M (Explorer Navigation hierarchy)
+=============================================================
+타겟유형 피로도 관리 Explorer.
+
+[Dependencies]
+=========
+- lgu:LGU_TARGET_TYPE_FATIGUE_M
+- lgu:LGU_TARGET_TYPE_FATIGUE_M input form
+-->
+<navtree label="[LGU] 타겟유형 피로도" name="LGU_TARGET_TYPE_FATIGUE_M" namespace="lgu">
+
+  <model name="root">
+    <nodeModel img="nms:typologyRule.png" label="[LGU] 타겟유형 피로도"
+               name="lguTargetTypeFatigue">
+      <view name="listdet" schema="lgu:LGU_TARGET_TYPE_FATIGUE_M" type="listdet">
+        <columns>
+          <node xpath="@label"/>
+          <node xpath="@ruleInternalName"/>
+          <node xpath="@LGU_TARGET_TYPE_M_NO"/>
+          <node xpath="@TYPE_DETAIL"/>
+          <node xpath="@messageType"/>
+          <node xpath="@capCount"/>
+          <node xpath="@periodDays"/>
+          <node xpath="@active"/>
+          <node xpath="@lastSyncStatus"/>
+        </columns>
+      </view>
+    </nodeModel>
+  </model>
+</navtree>

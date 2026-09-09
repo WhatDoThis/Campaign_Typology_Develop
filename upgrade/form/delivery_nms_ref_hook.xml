@@ -1,0 +1,18 @@
+<!--
+nms:delivery — 커스텀 입력 없음 (default 유지)
+==============================================
+캠페인 유형 입력은 채널별 form 에서 처리.
+
+| 채널 | form |
+|------|------|
+| SMS/MMS | lgu:deliveryCustomMMS |
+
+`EV(@messageType, '...')` 는 enum `@name` 이 merged schema 에 있어야 parse 됨.
+제거된 채널(예: lgu_off_inbound_shop) hook 은 nms:delivery form 에 두지 않음.
+
+nms:delivery Typology 탭에 ref / xpathsToLoadOpt 추가 **하지 않음**.
+Console default nms:delivery 에 ibank hook 이 남아 있으면 제거:
+
+  - ref woo:delivery / lgu:delivery lib 블록 삭제
+  - xpathsToLoadOpt 에 marketingParameters 또는 @LGU_TARGET_TYPE_M_NO 항목 삭제
+-->

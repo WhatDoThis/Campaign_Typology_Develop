@@ -1,0 +1,317 @@
+<!--
+lgu.deliveryCustomMMS ([LGU] SMS/MMS Delivery 입력 폼)
+======================================================
+타겟유형·성공지표·MMS 콘텐츠(SENDER/MSG) 입력. nms:delivery lguMMS 탭에서 ref.
+
+[Main Functions]
+===========
+- 타겟유형/성공지표 linkListChoice 스냅샷
+- MMS 콘텐츠 편집 및 컨텐츠셋 불러오기(contentSetPick, 선택)
+- Save 시 발신번호(SENDER) 필수 검증
+
+[Dependencies]
+=========
+- uplus:delivery (content/lguMMS — merged nms:delivery, enum sender_list on element)
+- lgu:delivery (@LGU_TARGET_TYPE_M_NO, messageType lguMMS)
+-->
+<form _cs="[CUSTOM] Delivery (MMS) (lgu)" created="2026-09-08 01:19:03.183Z" createdBy-id="26440"
+      entitySchema="xtk:form" img="xtk:form.png" label="[CUSTOM] Delivery (MMS)"
+      lastModified="2026-09-09 05:15:00.000Z" md5="2CA3FBC6D7317A051D8D108F8FE03FCF"
+      modifiedBy-id="26440" name="deliveryCustomMMS" namespace="lgu" xtkschema="xtk:form">
+  <createdBy _cs="우해인 (hiwoo)"/>
+  
+  <!-- 공통 영역 S -->
+  <container codepage="1252" name="common" type="visibleGroup" visibleIf="false">
+    <container codepage="1252" colcount="2" label="Delivery target population" type="targetFrame"/>
+  </container>
+  
+  
+  <!-- 공통 영역 E -->
+
+  <container codepage="1252" name="lib" type="visibleGroup" visibleIf="false">
+
+    <!-- LMS/MMS S -->
+
+    <container codepage="1252" name="lguMMS" nolabel="true" type="frame">
+      <container codepage="1252" colcount="2">
+        <input colspan="1" hidden="true" label="ID" refresh="true" xpath="@LGU_TARGET_TYPE_M_NO"/>
+        <input colspan="1" label="유형내용" refresh="true" type="value" xpath="@TYPE_DETAIL"/>
+        <input colspan="1" label="타겟유형 선택" prebuildSubForm="false" refresh="true"
+               type="subFormLink" xpath=".">
+          <form label="타겟유형" nothingToSave="true" xpath=".">
+            <input choiceButton="true" extraColumns="[.],@NO,@TYPE_DETAIL" monoSelection="true"
+                   schema="lgu:LGU_TARGET_TYPE_M" type="linkListChoice" xpath="."
+                   xpathOut="/ignored/LGU_TARGET_TYPE_M">
+              <input label="유형번호" xpath="@NO"/>
+              <input label="유형내용" xpath="@TYPE_DETAIL"/>
+              <orderBy>
+                <node expr="@NO" sortDesc="false"/>
+              </orderBy>
+            </input>
+            <leave>
+              <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@NO]" xpath="/delivery/@LGU_TARGET_TYPE_M_NO"/>
+              <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@TYPE_DETAIL]"
+                   xpath="/ignored/LGU_TARGET_TYPE_M/@TYPE_DETAIL"/>
+              <set expr="[/ignored/LGU_TARGET_TYPE_M/@TYPE_DETAIL]" xpath="@TYPE_DETAIL"/>
+            </leave>
+          </form>
+
+        </input>
+      </container>
+      <container codepage="1252" colcount="2">
+        <input colspan="1" hidden="true" label="성공지표번호" refresh="true" xpath="@LGU_SUCCESS_METRIC_M_NO"/>
+        <input colspan="1" label="지표명" refresh="true" type="value" xpath="@METRIC_NAME"/>
+        <input colspan="1" label="성공지표 선택" prebuildSubForm="false" refresh="true"
+               type="subFormLink" xpath=".">
+          <form label="성공지표" nothingToSave="true" xpath=".">
+            <input choiceButton="true" extraColumns="[.],@NO,@CODE,@METRIC_NAME"
+                   monoSelection="true" schema="lgu:LGU_SUCCESS_METRIC_M" type="linkListChoice"
+                   xpath="." xpathOut="/ignored/LGU_SUCCESS_METRIC_M">
+              <input label="성공지표번호" xpath="@NO"/>
+              <input label="성공지표코드" xpath="@CODE"/>
+              <input label="지표명" xpath="@METRIC_NAME"/>
+              <orderBy>
+                <node expr="@NO" sortDesc="false"/>
+              </orderBy>
+            </input>
+            <leave>
+              <set expr="[/ignored/LGU_SUCCESS_METRIC_M/LGU_SUCCESS_METRIC_M/@NO]"
+                   xpath="/delivery/@LGU_SUCCESS_METRIC_M_NO"/>
+              <set expr="[/ignored/LGU_SUCCESS_METRIC_M/LGU_SUCCESS_METRIC_M/@METRIC_NAME]"
+                   xpath="/ignored/LGU_SUCCESS_METRIC_M/@METRIC_NAME"/>
+              <set expr="[/ignored/LGU_SUCCESS_METRIC_M/@METRIC_NAME]" xpath="@METRIC_NAME"/>
+            </leave>
+          </form>
+
+        </input>
+      </container>
+      <container codepage="1252" name="notebook" type="contentEditor" xpath="content/lguMMS">
+        <leave>
+          <check expr="![/tmp/@readOnly] and (source/SENDER = '' or source/SENDER = ' ')">
+            <error>발신번호를 선택하세요.</error>
+          </check>
+        </leave>
+        <container codepage="1252" label="LMS/MMS" readOnlyIf="[/tmp/@readOnly]">
+          <container codepage="1252" colcount="2">
+            <input img="xtk:properties.png" label="컨텐츠 셋 불러오기" prebuildSubForm="false"
+                   type="flatSubFormButton">
+              <form label="컨텐츠 셋 검색" nothingToEdit="true" nothingToSave="true">
+                <leave>
+                  <soapCall name="getSelectedFields" service="lgu:contentSetPick">
+                    <param name="found" type="string" xpathOut="/tmp/@csFound"/>
+                    <param name="contentSetId" type="string" xpathOut="/tmp/@csId"/>
+                    <param name="sender" type="string" xpathOut="/tmp/@csSender"/>
+                    <param name="title" type="string" xpathOut="/tmp/@csTitle"/>
+                    <param name="content" type="string" xpathOut="/tmp/@csContent"/>
+                    <param name="image1" type="string" xpathOut="/tmp/@csImage1"/>
+                    <param name="image2" type="string" xpathOut="/tmp/@csImage2"/>
+                    <param name="image3" type="string" xpathOut="/tmp/@csImage3"/>
+                  </soapCall>
+                  <if expr="[/tmp/@csFound] = '1'">
+                    <set expr="[/tmp/@csId]" xpath="/delivery/content/lguMMS/source/MESSAGE_MANAGER_ID"/>
+                    <set expr="[/tmp/@csSender]" xpath="/delivery/content/lguMMS/source/SENDER"/>
+                    <set expr="[/tmp/@csTitle]" xpath="/delivery/content/lguMMS/source/RESERVED4"/>
+                    <set expr="[/tmp/@csContent]" xpath="/delivery/content/lguMMS/source/MSG"/>
+                    <set expr="[/tmp/@csImage1]" xpath="/delivery/content/lguMMS/source/RESERVED1"/>
+                    <set expr="[/tmp/@csImage2]" xpath="/delivery/content/lguMMS/source/RESERVED2"/>
+                    <set expr="[/tmp/@csImage3]" xpath="/delivery/content/lguMMS/source/RESERVED3"/>
+                    <setModified/>
+                  </if>
+                </leave>
+                <static type="help">MMS 컨텐츠 셋을 선택한 뒤 이 창을 닫으면 메시지관리시스템 코드(PK)/발신번호/제목/본문/첨부파일명이 자동 입력됩니다.</static>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/contentSetPick.jssp?view=pick&amp;deliveryId='+[/delivery/@id]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/contentSetPick"/>
+              </form>
+            </input>
+
+          </container>
+
+          <input label="메시지관리시스템 코드" lineCount="1" readOnly="true" xpath="source/MESSAGE_MANAGER_ID"/>
+          <input label="발신번호" menuId="deliveryMenuBuilder" required="true"
+                 type="sysenum" xpath="source/SENDER"/>
+          <input colspan="1" label="제목" menuId="deliveryMenuBuilder" type="scriptEdit"
+                 xpath="source/RESERVED4"/>
+          <input emoticon="true" fullToolbar="true" htmlMode="false" label="본문" name="ctSource"
+                 nolabel="false" type="htmlSource" xpath="source/MSG" xpathInsert="/ignored/customizeTextContent"
+                 xpathUrl="/tmp/urlTree/@toSelect">
+            <container codepage="1252">
+              <input menuId="deliveryMenuBuilder" type="customizeBtn" xpath="/ignored/customizeTextContent"/>
+            </container>
+          </input>
+          <static label="[이미지 첨부]" type="separator"/>
+
+          <!-- 첨부이미지1 -->
+          <container codepage="1252" colcount="4" label="첨부이미지1">
+            <input label="첨부이미지Url1" menuId="deliveryMenuBuilder" type="scriptEdit"
+                   xpath="source/RESERVED1"/>
+            <input img="xtk:upload.png" label="파일첨부" prebuildSubForm="false" type="flatSubFormButton">
+              <form label="첨부이미지1 — 파일 첨부" nothingToEdit="true" nothingToSave="true">
+                <leave>
+                  <soapCall name="getSelectedFile" service="lgu:filePick">
+                    <param exprIn="'RESERVED1'" type="string"/>
+                    <param name="fileName" type="string" xpathOut="/tmp/@mmsPick"/>
+                    <param name="assetId" type="string" xpathOut="/tmp/@mmsAssetId"/>
+                  </soapCall>
+                  <if expr="[/tmp/@mmsPick] != ''">
+                    <set expr="[/tmp/@mmsPick]" xpath="/delivery/content/lguMMS/source/RESERVED1"/>
+                    <set expr="[/tmp/@mmsAssetId]" xpath="/delivery/content/lguMMS/source/RESERVED_ASSET_ID1"/>
+                    <setModified/>
+                  </if>
+                </leave>
+                <static type="help">JPG 업로드 후 이 창을 닫으면 첨부이미지Url1에 자동 입력됩니다. (로컬 첨부는 AssetID 비움)</static>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/mmsAttach.jssp?view=attach&amp;slot=1&amp;deliveryId='+[/delivery/@id]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/mmsAttach"/>
+              </form>
+            </input>
+            <input img="xtk:properties.png" label="AEM 찾기" prebuildSubForm="false"
+                   type="flatSubFormButton">
+              <form label="첨부이미지1 — AEM Asset" nothingToEdit="true" nothingToSave="true">
+                <leave>
+                  <soapCall name="getSelectedFile" service="lgu:filePick">
+                    <param exprIn="'RESERVED1'" type="string"/>
+                    <param name="fileName" type="string" xpathOut="/tmp/@mmsPick"/>
+                    <param name="assetId" type="string" xpathOut="/tmp/@mmsAssetId"/>
+                  </soapCall>
+                  <if expr="[/tmp/@mmsPick] != ''">
+                    <set expr="[/tmp/@mmsPick]" xpath="/delivery/content/lguMMS/source/RESERVED1"/>
+                    <set expr="[/tmp/@mmsAssetId]" xpath="/delivery/content/lguMMS/source/RESERVED_ASSET_ID1"/>
+                    <setModified/>
+                  </if>
+                </leave>
+                <static type="help">AEM 선택 후 창을 닫으면 Url1 + AssetID(jcr:uuid)가 자동 입력됩니다.</static>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/mmsAttach.jssp?view=aem&amp;slot=1&amp;deliveryId='+[/delivery/@id]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/mmsAemPick"/>
+              </form>
+            </input>
+            <input img="xtk:loginfo.png" label="미리보기" prebuildSubForm="false" type="flatSubFormButton">
+              <form label="첨부이미지1 — 미리보기" nothingToEdit="true" nothingToSave="true">
+                <enter>
+                  <set expr="[/delivery/content/lguMMS/source/RESERVED1]" xpath="/tmp/@mmsFile"/>
+                </enter>
+                <static type="help">RESERVED1 값이 비어 있으면 먼저 파일을 첨부하세요.</static>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/mmsAttach.jssp?view=preview&amp;file='+[/tmp/@mmsFile]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/mmsPreview"/>
+              </form>
+            </input>
+            <input label="이미지AssetID" lineCount="1" menuId="deliveryMenuBuilder"
+                   readOnly="true" xpath="source/RESERVED_ASSET_ID1"/>
+          </container>
+
+          <!-- 첨부이미지2 -->
+          <container codepage="1252" colcount="4" label="첨부이미지2">
+            <input label="첨부이미지Url2" menuId="deliveryMenuBuilder" type="scriptEdit"
+                   xpath="source/RESERVED2"/>
+            <input img="xtk:upload.png" label="파일첨부" prebuildSubForm="false" type="flatSubFormButton">
+              <form label="첨부이미지2 — 파일 첨부" nothingToEdit="true" nothingToSave="true">
+                <leave>
+                  <soapCall name="getSelectedFile" service="lgu:filePick">
+                    <param exprIn="'RESERVED2'" type="string"/>
+                    <param name="fileName" type="string" xpathOut="/tmp/@mmsPick"/>
+                    <param name="assetId" type="string" xpathOut="/tmp/@mmsAssetId"/>
+                  </soapCall>
+                  <if expr="[/tmp/@mmsPick] != ''">
+                    <set expr="[/tmp/@mmsPick]" xpath="/delivery/content/lguMMS/source/RESERVED2"/>
+                    <set expr="[/tmp/@mmsAssetId]" xpath="/delivery/content/lguMMS/source/RESERVED_ASSET_ID2"/>
+                    <setModified/>
+                  </if>
+                </leave>
+                <static type="help">JPG 업로드 후 이 창을 닫으면 첨부이미지Url2에 자동 입력됩니다. (로컬 첨부는 AssetID 비움)</static>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/mmsAttach.jssp?view=attach&amp;slot=2&amp;deliveryId='+[/delivery/@id]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/mmsAttach"/>
+              </form>
+            </input>
+            <input img="xtk:properties.png" label="AEM 찾기" prebuildSubForm="false"
+                   type="flatSubFormButton">
+              <form label="첨부이미지2 — AEM Asset" nothingToEdit="true" nothingToSave="true">
+                <leave>
+                  <soapCall name="getSelectedFile" service="lgu:filePick">
+                    <param exprIn="'RESERVED2'" type="string"/>
+                    <param name="fileName" type="string" xpathOut="/tmp/@mmsPick"/>
+                    <param name="assetId" type="string" xpathOut="/tmp/@mmsAssetId"/>
+                  </soapCall>
+                  <if expr="[/tmp/@mmsPick] != ''">
+                    <set expr="[/tmp/@mmsPick]" xpath="/delivery/content/lguMMS/source/RESERVED2"/>
+                    <set expr="[/tmp/@mmsAssetId]" xpath="/delivery/content/lguMMS/source/RESERVED_ASSET_ID2"/>
+                    <setModified/>
+                  </if>
+                </leave>
+                <static type="help">AEM 선택 후 창을 닫으면 Url2 + AssetID(jcr:uuid)가 자동 입력됩니다.</static>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/mmsAttach.jssp?view=aem&amp;slot=2&amp;deliveryId='+[/delivery/@id]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/mmsAemPick"/>
+              </form>
+            </input>
+            <input img="xtk:loginfo.png" label="미리보기" prebuildSubForm="false" type="flatSubFormButton">
+              <form label="첨부이미지2 — 미리보기" nothingToEdit="true" nothingToSave="true">
+                <enter>
+                  <set expr="[/delivery/content/lguMMS/source/RESERVED2]" xpath="/tmp/@mmsFile"/>
+                </enter>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/mmsAttach.jssp?view=preview&amp;file='+[/tmp/@mmsFile]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/mmsPreview"/>
+              </form>
+            </input>
+            <input label="이미지AssetID" lineCount="1" menuId="deliveryMenuBuilder"
+                   readOnly="true" xpath="source/RESERVED_ASSET_ID2"/>
+          </container>
+
+          <!-- 첨부이미지3 -->
+          <container codepage="1252" colcount="4" label="첨부이미지3">
+            <input label="첨부이미지Url3" menuId="deliveryMenuBuilder" type="scriptEdit"
+                   xpath="source/RESERVED3"/>
+            <input img="xtk:upload.png" label="파일첨부" prebuildSubForm="false" type="flatSubFormButton">
+              <form label="첨부이미지3 — 파일 첨부" nothingToEdit="true" nothingToSave="true">
+                <leave>
+                  <soapCall name="getSelectedFile" service="lgu:filePick">
+                    <param exprIn="'RESERVED3'" type="string"/>
+                    <param name="fileName" type="string" xpathOut="/tmp/@mmsPick"/>
+                    <param name="assetId" type="string" xpathOut="/tmp/@mmsAssetId"/>
+                  </soapCall>
+                  <if expr="[/tmp/@mmsPick] != ''">
+                    <set expr="[/tmp/@mmsPick]" xpath="/delivery/content/lguMMS/source/RESERVED3"/>
+                    <set expr="[/tmp/@mmsAssetId]" xpath="/delivery/content/lguMMS/source/RESERVED_ASSET_ID3"/>
+                    <setModified/>
+                  </if>
+                </leave>
+                <static type="help">JPG 업로드 후 이 창을 닫으면 첨부이미지Url3에 자동 입력됩니다. (로컬 첨부는 AssetID 비움)</static>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/mmsAttach.jssp?view=attach&amp;slot=3&amp;deliveryId='+[/delivery/@id]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/mmsAttach"/>
+              </form>
+            </input>
+            <input img="xtk:properties.png" label="AEM 찾기" prebuildSubForm="false"
+                   type="flatSubFormButton">
+              <form label="첨부이미지3 — AEM Asset" nothingToEdit="true" nothingToSave="true">
+                <leave>
+                  <soapCall name="getSelectedFile" service="lgu:filePick">
+                    <param exprIn="'RESERVED3'" type="string"/>
+                    <param name="fileName" type="string" xpathOut="/tmp/@mmsPick"/>
+                    <param name="assetId" type="string" xpathOut="/tmp/@mmsAssetId"/>
+                  </soapCall>
+                  <if expr="[/tmp/@mmsPick] != ''">
+                    <set expr="[/tmp/@mmsPick]" xpath="/delivery/content/lguMMS/source/RESERVED3"/>
+                    <set expr="[/tmp/@mmsAssetId]" xpath="/delivery/content/lguMMS/source/RESERVED_ASSET_ID3"/>
+                    <setModified/>
+                  </if>
+                </leave>
+                <static type="help">AEM 선택 후 창을 닫으면 Url3 + AssetID(jcr:uuid)가 자동 입력됩니다.</static>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/mmsAttach.jssp?view=aem&amp;slot=3&amp;deliveryId='+[/delivery/@id]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/mmsAemPick"/>
+              </form>
+            </input>
+            <input img="xtk:loginfo.png" label="미리보기" prebuildSubForm="false" type="flatSubFormButton">
+              <form label="첨부이미지3 — 미리보기" nothingToEdit="true" nothingToSave="true">
+                <enter>
+                  <set expr="[/delivery/content/lguMMS/source/RESERVED3]" xpath="/tmp/@mmsFile"/>
+                </enter>
+                <input sessionToken="true" type="urlViewer" urlExpr="$(serverUrl)+'/lgu/mmsAttach.jssp?view=preview&amp;file='+[/tmp/@mmsFile]+'&amp;_token=xK9%23mP2%24vL5%40nQ8%21wR3%5EtY6%26uI0%2AoA4'"
+                       urlMode="false" xpath="/ignored/mmsPreview"/>
+              </form>
+            </input>
+            <input label="이미지AssetID" lineCount="1" menuId="deliveryMenuBuilder"
+                   readOnly="true" xpath="source/RESERVED_ASSET_ID3"/>
+          </container>
+
+        </container>
+      </container>
+    </container>
+    <!-- LMS/MMS E -->
+  </container>
+</form>

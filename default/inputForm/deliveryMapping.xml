@@ -1,0 +1,226 @@
+<form _cs="Target mapping (nms)" created="2026-06-11 07:38:50.842Z" createdBy-id="0"
+      entitySchema="xtk:form" img="xtk:form.png" label="Target mapping" lastModified="2026-08-13 02:36:24.235Z"
+      md5="C7CA3E628F5011A0186E3A9C58180F4B" modifiedBy-id="4000" name="deliveryMapping"
+      namespace="nms" type="iconbox" xtkschema="xtk:form">
+  <enter>
+    <set expr="mappingSchemaExt(@schema)" xpath="/ignored/@dummySchema"/>
+    <set expr="Iif(@recipientLink!='', 1, 0)" xpath="/ignored/@longLinkToMapping"/>
+  </enter>
+  <container colcount="2" img="xtk:properties.png" label="General" name="tabGene">
+    <input xpath="@label"/>
+    <input xpath="@name"/>
+
+    <container applicableIf="HasPackage('nms:mobileApp')" colspan="2" name="mobileApp"
+               type="visibleGroup" visibleIf="[/ignored/@newDlvMapping]">
+      <static label="Mobile applications" type="separator"/>
+      <input label="Target mapping for mobile applications" type="checkbox" xpath="/tmp/targetPackage/@mobileApp"/>
+      <container type="visibleGroup" visibleIf="[/tmp/targetPackage/@mobileApp]">
+        <input img="xtk:parameters.png" label="Specify additional fields..." nolabel="false"
+               prebuildSubForm="false" type="subFormLink" xpath=".">
+          <form label="Extension of the mobile application subscription schema">
+            <enter>
+              <if expr="[/tmp/targetPackage/appSubscriptionSchema/element/@name]=='' AND [/tmp/targetPackage/@schemaExtNamespace]!='' AND SchemaExists([/tmp/targetPackage/@schemaNamespace]+':appSubscription'+[/tmp/targetPackage/@schemaSuffix])">
+                <set value="xtk:srcSchema" xpath="/tmp/schemaQueryDef/@schema"/>
+                <set value="getIfExists" xpath="/tmp/schemaQueryDef/@operation"/>
+                <set value="data" xpath="/tmp/schemaQueryDef/select/node/@expr"/>
+                <set value="true" xpath="/tmp/schemaQueryDef/select/node/@anyType"/>
+                <set expr="'@name=\'appSubscription' + [/tmp/targetPackage/@schemaSuffix] + '\' and @namespace=\'' + [/tmp/targetPackage/@schemaExtNamespace] + '\''"
+                     xpath="/tmp/schemaQueryDef/where/condition/@expr"/>
+                <soapCall name="ExecuteQuery" service="xtk:queryDef">
+                  <param exprIn="[/tmp/schemaQueryDef]" type="DOMDocument"/>
+                  <param type="DOMDocument" xpathOut="/tmp/targetPackage/appSubscriptionSchema"/>
+                </soapCall>
+              </if>
+            </enter>
+            <input nolabel="true" toolbarCaption="List of fields to add" type="list"
+                   xpath="/tmp/targetPackage/appSubscriptionSchema/element/attribute">
+              <input label="Label" xpath="@label"/>
+              <input label="Name" xpath="@name"/>
+              <input enum="xtk:srcSchema:fieldType" label="Type" type="sysenum" xpath="@type"/>
+              <input label="Size" type="number" xpath="@length"/>
+            </input>
+            <leave>
+              <set value="true" xpath="/tmp/targetPackage/appSubscriptionSchema/@_defined"/>
+            </leave>
+          </form>
+        </input>
+        <input label="Schema of existing subscriber applications" type="schemaEdit"
+               xpath="/tmp/targetPackage/@appSubSchema"/>
+        <static type="help">If you leave the subscriber application schema empty, a storage schema will be generated for you based on the recipient template.</static>
+      </container>
+    </container>
+
+    <static colspan="2" label="Target population" type="separator"/>
+    <!--For non-mobile app -->
+    <container colspan="2" type="visibleGroup" visibleIf="![/tmp/targetPackage/@mobileApp]">
+      <input checkedValue="0" colspan="2" label="Use the targeting dimension directly"
+             type="radioButton" xpath="/ignored/@longLinkToMapping"/>
+      <input checkedValue="1" colspan="2" label="Use linked data" type="radioButton"
+             xpath="/ignored/@longLinkToMapping"/>
+      <container colspan="2" type="visibleGroup" visibleIf="[/ignored/@longLinkToMapping]">
+        <input label="Filtering dimension" type="schemaEdit" xpath="@schema" xpathLink="@recipientLink"/>
+        <input choiceType="xpath" label="Change dimension" nolabel="false" type="pathEdit"
+               useTablePath="true" useUnboundPath="true" xpath="@recipientLink"/>
+        <input expr="GetLinkSchema(@schema, @recipientLink)" type="expr" xpath="@targetSchema"/>
+        <input label="Targeting dimension" readOnly="true" type="schemaEdit" xpath="@targetSchema"/>
+      </container>
+      <container colspan="2" type="visibleGroup" visibleIf="![/ignored/@longLinkToMapping]">
+        <input label="Targeting dimension" type="targetSchema" xpath="@schema" xpathLink="@recipientLink">
+          <form entity-schema="xtk:schema" label="Please select a document" name="entitySchema"
+                namespace="xtk" nothingToSave="true">
+            <input monoSelection="true" notifyFolderKeyPath="" schema="xtk:schema"
+                   type="linkListChoice" xpath=".">
+              <input alias="@_cs" expr="[.]"/>
+              <input xpath="[.]"/>
+              <input xpath="@namespace"/>
+              <input xpath="@name"/>
+              <orderBy>
+                <node expr="@label"/>
+              </orderBy>
+            </input>
+          </form>
+        </input>
+      </container>
+    </container>
+    <!--For mobile app -->
+    <container colspan="2" type="visibleGroup" visibleIf="[/tmp/targetPackage/@mobileApp]">
+      <!--For existing schema of subscriber applications -->
+      <container colspan="2" type="visibleGroup" visibleIf="[/tmp/targetPackage/@appSubSchema]!=''">
+        <!--TODO: NEO-29142 Target Mapping wizard improvement
+        <input xpath="@schema" expr="[/tmp/targetPackage/@appSubSchema]" type="expr"/> -->
+        <input label="Filtering dimension" type="schemaEdit" xpath="@schema" xpathLink="@recipientLink"/>
+        <input choiceType="xpath" label="Change dimension" nolabel="false" type="pathEdit"
+               useTablePath="true" useUnboundPath="true" xpath="@recipientLink"/>
+        <input expr="GetLinkSchema(@schema, @recipientLink)" type="expr" xpath="@targetSchema"/>
+        <input label="Targeting dimension" readOnly="true" type="schemaEdit" xpath="@targetSchema"/>
+      </container>
+      <!--For non existing schema of subscriber applications -->
+      <container colspan="2" type="visibleGroup" visibleIf="[/tmp/targetPackage/@appSubSchema]=''">
+        <input label="Targeting dimension" type="schemaEdit" xpath="@targetSchema"/>
+        <input expr="@targetSchema" type="expr" xpath="@schema"/>
+      </container>
+    </container>
+    <static colspan="2" label="Comment" type="separator"/>
+    <input colspan="2" nolabel="true" xpath="comment"/>
+    <input expr="mappingSchemaExt(@schema)" type="expr" xpath="/ignored/@dummySchema"/>
+  </container>
+  <container label="Mapping" name="tabMapping">
+    <container name="ntbk" type="notebook">
+      <container label="Address" name="tabAddr">
+        <static label="Delivery address" type="separator"/>
+
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@custmms"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@lgu_mms"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@email"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@sms"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@phone"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@fax"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@agency"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input choiceType="xpath" nolabel="false" type="pathEdit" useUnboundPath="false"
+               xpath="@paper" xpathSchema="/ignored/@dummySchema"/>
+        <input applicableIf="HasPackage('nms:social')" nolabel="false" type="pathEdit"
+               useUnboundPath="false" xpath="@facebook" xpathSchema="/ignored/@dummySchema"/>
+        <input applicableIf="HasPackage('nms:social')" nolabel="false" type="pathEdit"
+               useUnboundPath="false" xpath="@twitter" xpathSchema="/ignored/@dummySchema"/>
+        <input applicableIf="HasPackage('nms:line')  OR HasPackage('nms:lineV2')"
+               nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@line"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@affinityGroup"
+               xpathSchema="/ignored/@dummySchema"/>
+        <container type="visibleGroup" visibleIf="@email != ''">
+          <static label="Email format" type="separator"/>
+          <input label="Format" nolabel="false" type="pathEdit" useUnboundPath="false"
+                 xpath="@format" xpathSchema="/ignored/@dummySchema"/>
+        </container>
+        <container type="visibleGroup" visibleIf="@paper != ''">
+          <static label="Direct mail parameters" type="separator"/>
+          <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@countryCode"
+                 xpathSchema="/ignored/@dummySchema"/>
+        </container>
+      </container>
+      <container label="Denylisting">
+        <static label="Denylisting indicators" type="separator"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@blackListEmail"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@blackListSms"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@blackListPhone"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@blackListFax"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@blackListPaper"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@blackListAgency"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input applicableIf="HasPackage('nms:mobileApp')" nolabel="false" type="pathEdit"
+               useUnboundPath="false" xpath="@blackListIos" xpathSchema="/ignored/@dummySchema"/>
+        <input applicableIf="HasPackage('nms:mobileApp')" nolabel="false" type="pathEdit"
+               useUnboundPath="false" xpath="@blackListAndroid" xpathSchema="/ignored/@dummySchema"/>
+        <input applicableIf="HasPackage('nms:line') OR HasPackage('nms:lineV2')"
+               nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@blackListLine"
+               xpathSchema="/ignored/@dummySchema"/>
+      </container>
+      <container label="Storage" maxLabelWidth="200" xpath="storage">
+        <static label="Messages to send" type="separator"/>
+        <input schema="xtk:schema" type="schemaEdit" xpath="@broadLogSchema"/>
+        <static label="Messages excluded" type="separator"/>
+        <input checkedValue="0" label="Store exclusions and messages in the same table"
+               type="radioButton" xpath="@exclusionType"/>
+        <input checkedValue="1" label="Store messages only" type="radioButton" xpath="@exclusionType"/>
+        <input checkedValue="2" label="Store exclusions and messages in separate tables"
+               type="radioButton" xpath="@exclusionType"/>
+        <container type="visibleGroup" visibleIf="@exclusionType==2">
+          <input schema="xtk:schema" type="schemaEdit" xpath="@broadLogExclSchema"/>
+        </container>
+        <static label="Tracking logs" type="separator"/>
+        <input schema="xtk:schema" type="schemaEdit" xpath="@trackingLogSchema"/>
+        <input createMode="none" xpath="../defaultOrigin">
+          <sysFilter>
+            <condition expr="@nature='unknownSource'"/>
+            <condition expr="[@mapping-id]=$(../@id)"/>
+          </sysFilter>
+        </input>
+        <static label="Default source delivery for web tracking if no other source can be found."
+                type="help"/>
+
+        <static label="Additional fields" type="separator"/>
+        <input label=" " type="list" xpath="extraField">
+          <input hideMappedAsXml="false" type="pathedit" useUnboundPath="false" xpath="@srcExpr"
+                 xpathSchema="/ignored/@dummySchema"/>
+          <input type="pathedit" xpath="@dstXPath" xpathSchema="../@broadLogSchema"/>
+        </input>
+        <static type="help">Specify here a list of supplemental fields to store associated with the delivery logs. These fields can permanently store information on individual members of the target (eg: [recipient/@firstName]) or additional data from the targeting process (eg: [targetData/@offerCode]).</static>
+      </container>
+      <container applicableIf="HasPackage('nms:social')" label="Social networks"
+                 xpath="social">
+        <static type="help">The following fields enable you to store data from profiles acquired via social networks.</static>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@email"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@firstName"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@lastName"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@birthDate"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@gender"
+               xpathSchema="/ignored/@dummySchema"/>
+        <input nolabel="false" type="pathEdit" useUnboundPath="false" xpath="@locale"
+               xpathSchema="/ignored/@dummySchema"/>
+        <static label="Link from the visitor schema" type="separator"/>
+        <input hideMappedAsXml="true" nolabel="false" schema="nms:visitor" showLinks1="false"
+               type="pathEdit" useLink11Path="true" useUnboundPath="false" xpath="@pathFromVisitorSchema"/>
+      </container>
+    </container>
+  </container>
+  <leave>
+    <set expr="Iif(EV([storage/@exclusionType], 'other'), [storage/@broadLogExclSchema], '')"
+         xpath="storage/@broadLogExclSchema"/>
+  </leave>
+</form>

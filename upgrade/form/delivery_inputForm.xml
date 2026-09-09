@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+lgu.delivery (Delivery lib — 선택적, 현재 미사용)
+==================================================
+MMS 채널은 deliveryCustomMMS.xml 에 타겟유형 UI 가 포함됨.
+nms:delivery 에 ref 하지 않음 — default form 유지.
+
+향후 Email 등 다른 채널에서 lib ref 가 필요할 때만 사용.
+
+[Dependencies]
+=========
+- lgu:delivery, lgu:LGU_TARGET_TYPE_M
+-->
+<form entitySchema="xtk:form" label="Delivery (lgu extensions)"
+      name="delivery" namespace="lgu" xtkschema="xtk:form">
+
+  <container name="lib" type="visibleGroup" visibleIf="false">
+    <form colcount="2" label="캠페인 유형" name="targetType"
+          nothingToEdit="false" nothingToSave="false">
+      <input hidden="true" xpath="@LGU_TARGET_TYPE_M_NO"/>
+      <input label="유형내용" readOnly="true" type="value" xpath="@TYPE_DETAIL"/>
+      <input colspan="2" label="타겟유형 선택" prebuildSubForm="false" refresh="true"
+             type="subFormLink" xpath=".">
+        <form label="타겟유형" nothingToSave="true" xpath=".">
+          <input choiceButton="true" extraColumns="[.],@NO,@TYPE_DETAIL" monoSelection="true"
+                 schema="lgu:LGU_TARGET_TYPE_M" type="linkListChoice" xpath="."
+                 xpathOut="/ignored/LGU_TARGET_TYPE_M">
+            <input label="유형번호" xpath="@NO"/>
+            <input label="유형내용" xpath="@TYPE_DETAIL"/>
+            <orderBy>
+              <node expr="@NO" sortDesc="false"/>
+            </orderBy>
+          </input>
+          <leave>
+            <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@NO]"
+                 xpath="/delivery/@LGU_TARGET_TYPE_M_NO"/>
+            <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@TYPE_DETAIL]"
+                 xpath="/delivery/@TYPE_DETAIL"/>
+          </leave>
+        </form>
+      </input>
+    </form>
+  </container>
+
+</form>

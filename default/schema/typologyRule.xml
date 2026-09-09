@@ -1,0 +1,243 @@
+<srcSchema desc="Rules applying to delivery actions based on typologies" entitySchema="xtk:srcSchema"
+           img="nms:typorule.png" implements="xtk:persist" label="Typology rules"
+           labelSingular="Typology rule" md5="CCBA962DB0B3959C5A05C131E8DBA834" name="typologyRule"
+           namespace="nms" xtkschema="xtk:srcSchema">
+
+  <!-- adding with the value "all" -->
+  <enumeration name="messageType" template="nms:delivery:messageType">
+    <value applicableIf="HasPackage('nms:interaction') and HasPackage('xxl:fullfdaMkt')=false"
+           desc="Web channel" enabledIf="@ruleType = 'propositionConsistency'" img="nms:world.png"
+           label="Inbound Web" name="web" value="50"/>
+    <value applicableIf="HasPackage('nms:interaction') and HasPackage('xxl:fullfdaMkt')=false"
+           desc="Call Center channel" enabledIf="@ruleType = 'propositionConsistency'"
+           img="nms:phone.png" label="Inbound call center" name="callCenter" value="51"/>
+    <value desc="All delivery channels" enabledIf="@ruleType != 'volume'" img="nms:world.png"
+           label="All channels" name="all" value="127"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="javascript" label="Rule type" name="ruleType">
+    <value desc="The rule defines a SQL recipient-exclusion query." img="xtk:filter.png"
+           label="Filtering" name="sql"/>
+    <value applicableIf="HasPackage('nms:campaignOptimization')" desc="The rule defines the settings used to manage pressure between delivery actions."
+           img="nms:businessRanking.png" label="Pressure" name="businessRanking"/>
+    <value applicableIf="HasPackage('nms:campaignOptimization')" desc="The rule defines the settings used to manage delivery capacity."
+           img="nms:periodVolume.png" label="Capacity" name="volume"/>
+    <value desc="The rule defines a control formula to apply on the delivery." img="xtk:javascript.png"
+           label="Control" name="javascript"/>
+    <value applicableIf="HasPackage('nms:interaction')" desc="The rules defines the presentation settings for offer propositions."
+           img="nms:offer.png" label="Offer presentation" name="propositionConsistency"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="all" label="Offer-application context" name="contextType">
+    <value desc="The rules is applied all of the time." label="All" name="all" value="0"/>
+    <value desc="The rule is only applicable for certain outlines." label="Outline"
+           name="compo" value="1"/>
+    <value desc="The rule is only applicable for certain deliveries." label="Delivery"
+           name="delivery" value="2"/>
+  </enumeration>
+
+  <enumeration basetype="string" default="preTarget" label="Analysis phase" name="ruleStep">
+    <help>Specifies the delivery analysis step during which the typology rule is applied.</help>
+    <value desc="Rule is applied only once when the analysis starts." label="At the start of targeting"
+           name="preTarget"/>
+    <value desc="The rule is applied after targeting and associated counts." label="After targeting"
+           name="postTarget"/>
+    <value desc="The rule is applied once when starting preparing the messages."
+           label="At the start of personalization" name="preMessage"/>
+    <value desc="The rule is applied after preparing the messages." label="At the end of the analysis"
+           name="postMessage"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="constant" label="Threshold type" name="thresholdType">
+    <value label="Constant" name="constant" value="0"/>
+    <value label="Depends on the recipient" name="formula" value="1"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="sec" label="Grouping unit" name="boxingUnit">
+    <value label="(no grouping)" name="sec" value="0"/>
+    <value label="Grouping per day" name="day" value="1"/>
+    <value label="Grouping per calendar week" name="week" value="2"/>
+    <value label="Grouping per calendar month" name="month" value="3"/>
+    <value label="Grouping per calendar quarter" name="quarter" value="4"/>
+    <value label="Grouping per calendar year" name="year" value="5"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="all" label="Set of offers" name="offerSet">
+    <value desc="Propositions for all offers" label="All offers" name="all" value="0"/>
+    <value desc="Propositions for the same offer" label="Only the offer being presented"
+           name="sameOffer" value="1"/>
+    <value desc="Propositions for offers of the same category" label="Offers for the same category"
+           name="sameCategory" value="2"/>
+    <value desc="Propositions for offers of the rule (uses the 'general' tab filter)"
+           label="Offers which the rule applies to" name="ruleOffers" value="3"/>
+  </enumeration>
+
+  <enumeration basetype="byte" default="all" label="Proposition status" name="propositionStatus">
+    <value desc="All propositions regardless of their status" label="Regardless of proposition status"
+           name="all" value="0"/>
+    <value label="Accepted or rejected propositions" name="acceptedOrRefused" value="1"/>
+    <value label="Accepted propositions" name="accepted" value="2"/>
+    <value label="Rejected propositions" name="refused" value="3"/>
+  </enumeration>
+
+  <!-- ============
+       Root element
+       ============ -->
+  <element autopk="true" enumImage="@messageType" folderModel="nmsTypologyRule" img="nms:typorule.png"
+           name="typologyRule" pkgAdmin="@id != 0">
+    <compute-string expr="@label + ' ' + '(' + [folder/@label] + ')'"/>
+    <key name="name">
+      <keyfield xpath="@name"/>
+    </key>
+    <dbindex name="mt"> <!-- short index name necessary for Oracle -->
+      <keyfield xpath="@messageType"/>
+    </dbindex>
+
+    <attribute default="GetOption('XtkInstancePrefix')+'RL'+CounterValue('nmsTypologyRule')"
+               name="name" template="xtk:common:name"/>
+    <attribute name="label" template="xtk:common:label"/>
+    <attribute enum="messageType" label="Channel" name="messageType" type="byte"/>
+    <attribute default="true" desc="Rule is active" label="Active" name="active"
+               type="boolean"/>
+
+    <attribute advanced="true" defOnDuplicate="true" label="Application built-in rule"
+               name="builtIn" type="boolean"/>
+
+    <attribute enum="nms:typologyRule:ruleType" label="Rule type" length="30" name="ruleType"
+               type="string"/>
+    <attribute enum="nms:typologyRule:ruleStep" label="Phase" length="16" name="ruleStep"
+               type="string"/>
+    <attribute default="50" desc="Defines execution order for all rules in the same phase (from smallest to largest value)"
+               label="Execution order" name="order" type="long"/>
+
+    <attribute label="Re-apply the rule at the start of personalization" name="forceOnPrepareMessage"
+               type="boolean"/>
+    <attribute desc="Defines the frequency at which the rule must be recalculated"
+               label="Frequency" name="validity" type="timespan"/>
+
+    <attribute desc="Severity level when the rule fails." enum="xtk:jobLog:logType"
+               label="Level" name="level" type="byte" xml="true"/>
+    <element name="desc" template="xtk:common:desc"/>
+    <element aggregate="xtk:common:auditTrail" name="auditTrail"/>
+    <element desc="Source code of the rule" label="Code" name="code" type="CDATA"
+             xml="true"/>
+
+    <attribute default="getOption('Nms_DefaultRcpSchema')" desc="Schema to which the filtering applies"
+               label="Targeting dimension" name="schema" required="true" xml="true"/>
+    <attribute applicableIf="HasPackage('nms:interaction')" desc="Storage dimension for propositions"
+               label="Storage dimension" name="propositionSchema" type="string" xml="true"/>
+
+    <element label="Exclusion filtering condition" name="where" unbound="true" xml="true">
+      <element aggregate="xtk:queryDef:where" name="where"/>
+      <attribute expr="[../@schema]" label="Filtering schema" name="filteringSchema"
+                 pkgStatus="always" type="string"/>
+      <attribute label="Filter name" name="filterName" type="string"/>
+      <element desc="Context of the condition" label="Context" name="ctx" type="ANY"/>
+      <element label="Query label" name="humanCond" type="string"/>
+    </element>
+
+    <element label="Query" name="humanCond" type="string" xml="true"/>
+
+    <element label="Messages to take into account" name="contextFilter" xml="true">
+      <attribute enum="contextType" label="Context of application" name="contextType"/>
+      <element label="Condition" name="where" template="xtk:queryDef:where">
+        <attribute expr="Iif([../../@ruleType]='propositionConsistency', 'nms:offer', Iif([../@contextType]=2, 'nms:delivery', 'nms:deliveryOutline'))"
+                   label="Filtering schema" name="filteringSchema" pkgStatus="always"
+                   type="string"/>
+      </element>
+      <element label="Query label" name="humanCond" type="string"/>
+    </element>
+
+    <!--
+      Offer proposition consistency parameters
+      -->
+    <element applicableIf="HasPackage('nms:interaction')" desc="Offer presentation settings"
+             label="Offer presentation" name="propositionConsistency" xml="true">
+      <attribute default="1296000" label="Period considered" name="period" type="timespan"/>
+      <attribute default="1" label="Threshold" name="threshold" type="long"/>
+
+      <attribute enum="nms:typologyRule:offerSet" label="Offers" name="offerSet"/>
+      <attribute label="On the same channel only" name="sameChannel" type="boolean"/>
+      <attribute enum="nms:typologyRule:propositionStatus" label="Proposition status"
+                 name="status"/>
+
+      <element desc="Proposition count conditions" label="Propositions to count"
+               name="propositionFilter" xml="true">
+        <element label="Condition" name="where" template="xtk:queryDef:where">
+          <attribute expr="[../../../@propositionSchema]" label="Filtering schema"
+                     name="filteringSchema" pkgStatus="always" type="string"/>
+        </element>
+        <element label="Query label" name="humanCond" type="string"/>
+      </element>
+    </element>
+
+    <!--
+      Business ranking parameters
+      -->
+    <element applicableIf="HasPackage('nms:campaignOptimization')" desc="Pressure settings for delivery actions"
+             label="Pressure" name="businessRanking" xml="true">
+      <attribute desc="Take the deliveries into account in the provisional calendar"
+                 label="Take into account in the provisional calendar" name="activeForecast"
+                 type="boolean"/>
+      <attribute default="1296000" label="Period considered" name="periodRanking"
+                 type="timespan"/>
+      <attribute enum="boxingUnit" label="Period type" name="boxingUnit" type="byte"/>
+      <attribute enum="thresholdType" label="Threshold type" name="thresholdType"
+                 type="byte"/>
+      <element label="Threshold computation formula" name="thresholdFormula" type="string"/>
+      <attribute default="1" label="Threshold" name="threshold" type="long"/>
+      <attribute label="Grouping" name="thresholdLink" type="string"/>
+      <element default="5" label="Default weight formula" name="weightFormula" type="string"/>
+
+      <element desc="Message count condition" label="Messages to count" name="deliveryFilter"
+               xml="true">
+        <element label="Condition" name="where" template="xtk:queryDef:where">
+          <attribute expr="'nms:delivery'" label="Filtering schema" name="filteringSchema"
+                     pkgStatus="always" type="string"/>
+        </element>
+        <element label="Query label" name="humanCond" type="string"/>
+      </element>
+    </element>
+
+    <!--
+      Capacity parameters
+      -->
+    <element applicableIf="HasPackage('nms:campaignOptimization')" desc="Channel pressure settings"
+             label="Volume" name="volume" xml="true">
+      <attribute label="Exclude from the target messages in excess of capacity" name="preventOverConsumption"
+                 type="boolean"/>
+      <attribute label="Do not limit instantaneous delivery capacity" name="noMaxSpeed"
+                 type="boolean"/>
+      <attribute applicableIf="HasPackage('nms:centralLocal')" label="Split this channel into sub-channels"
+                 name="useSubChannels" type="boolean"/>
+      <element applicableIf="HasPackage('nms:centralLocal')" label="Sub-channel calculation formula"
+               name="channelFormula" type="string"/>
+    </element>
+
+    <element label="Rule folder" name="folder" required="true" revDesc="Typology rules contained in this folder"
+             revIntegrity="define" revLabel="Typology rules" target="xtk:folder"
+             type="link"/>
+
+    <!-- central local -->
+    <element applicableIf="HasPackage('nms:centralLocal')" label="Organizational entity"
+             name="localOrgUnit" revIntegrity="define" target="nms:localOrgUnit"
+             type="link"/>
+    <element applicableIf="HasPackage('nms:centralLocal')" desc="Association of the central typology rule"
+             label="Associated central typology rule" name="centralTypologyRule"
+             revIntegrity="define" target="nms:typologyRule" type="link"/>
+  </element>
+  <methods>
+
+    <method name="GenerateVolumeLines" static="true">
+      <help>Generates availability lines for the current typology</help>
+      <parameters>
+        <param desc="Rule ID" inout="in" name="ruleId" type="long"/>
+        <param desc="Availability time per line" inout="in" name="lineDuration" type="timespan"/>
+        <param desc="Quantity available" inout="in" name="quantity" type="double"/>
+        <param desc="Generation parameters" inout="in" name="scheduling" type="string"/>
+        <param desc="Logical sub-channel ID" inout="in" name="subChannel" type="string"/>
+      </parameters>
+    </method>
+
+  </methods>
+</srcSchema>
