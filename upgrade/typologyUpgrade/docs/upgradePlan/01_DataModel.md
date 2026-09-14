@@ -7,6 +7,8 @@
 | `lgu:LGU_TARGET_TYPE_M` | Stage 타겟유형 마스터 (`@NO`, `@TYPE_DETAIL`) | — |
 | `lgu:LGU_TARGET_TYPE_FATIGUE_M` | 피로도 cap · Rule sync 운영 | **없음** — NO·TYPE_DETAIL 값 복사 |
 | `lgu:delivery` | 발송 시 `@LGU_TARGET_TYPE_M_NO` 스냅샷 | **없음** |
+| `lgu:LGU_CUSTOMER_MAPPING` | Pressure linked dimension (고객번호 cap) | join `@CUST_ID_T` |
+| `uplus:recipient` (ext) | `@CUST_ID`, `@CUST_ID_T`, link `LGU_CUSTOMER_MAPPING` | — |
 
 ---
 
@@ -95,3 +97,19 @@ Application + Limit deliveries **동일 조건**.
 | Email | `TYPO_FATIGUE_EMAIL` (Internal name 확인) |
 
 Rule sync 시 Typology Rules 목록에 rel 추가 (있으면 skip).
+
+---
+
+## 1-6. Rank A — 고객번호 linked dimension (Pressure)
+
+| 항목 | 값 |
+|------|-----|
+| Mapping table | `lgu:LGU_CUSTOMER_MAPPING` — PK `@CUST_ID_T` |
+| Recipient link | `LGU_CUSTOMER_MAPPING` on `uplus:recipient` — join `@CUST_ID_T` ↔ `@CUST_ID_T` |
+| Sync `thresholdLink` | **`LGU_CUSTOMER_MAPPING`** (link 이름만; `@CUST_ID_T` 금지) |
+| UI Count link | `[LGU] 고객번호 매핑 (LGU_CUSTOMER_MAPPING)` |
+| 발송 address | Target mapping `@mobilePhone` (변경 없음) |
+
+`lguFatigueRuleSync.js` → `businessRanking/@thresholdLink={LGU_CUSTOMER_MAPPING}`.
+
+**데이터:** `LGU_CUSTOMER_MAPPING` row + recipient `@CUST_ID_T` — ETL/운영 배치. Repo Test seed JS **없음** (2026-09-14 정리).

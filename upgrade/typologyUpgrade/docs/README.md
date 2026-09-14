@@ -12,7 +12,8 @@
 | [upgradePlan/](upgradePlan/00_Index.md) | 설계 · 데이터 모델 · API |
 | [packageRun/](packageRun/00_Index.md) | Console Import · Execute 절차 |
 
-**1차 구축:** [../docs/00_README.md](../docs/00_README.md)
+**1차 구축:** [typologySetup/docs/00_README.md](../../typologySetup/docs/00_README.md)  
+**공통 스키마:** [shared/README.md](../../shared/README.md)
 
 ---
 
@@ -20,18 +21,15 @@
 
 ```
 typologyUpgrade/
+  schema/LGU_TARGET_TYPE_M.xml
+  schema/LGU_TARGET_TYPE_FATIGUE_M.xml
+  schema/typologyRule.xml
   form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml
   navtree/LGU_TARGET_TYPE_FATIGUE_M_navtree.xml
-  js/lguFatigueRuleSync.js
-  js/migrate_fatigue_rows.js
-  js/phase0_validate_write.js
-  js/syncAll_scheduled.js
-  js/templates/
+  js/lguFatigueRuleSync.js      ← Console JavaScript codes (library)
+  js/syncAll_scheduled.js       ← Technical WF reconcile (optional)
+  js/templates/                 ← Rule XML reference only
   docs/
 ```
 
-**스키마 (upgrade/schema/):**
-
-- `LGU_TARGET_TYPE_M.xml` — 타겟유형 마스터 (Stage, read-only 운영)
-- `LGU_TARGET_TYPE_FATIGUE_M.xml` — 피로도 cap · Rule sync
-- `delivery.xml` — `@LGU_TARGET_TYPE_M_NO`, `@TYPE_DETAIL`
+**Delivery 확장 (`@LGU_TARGET_TYPE_M_NO`):** [shared/schema/delivery_lgu.xml](../../shared/schema/delivery_lgu.xml)

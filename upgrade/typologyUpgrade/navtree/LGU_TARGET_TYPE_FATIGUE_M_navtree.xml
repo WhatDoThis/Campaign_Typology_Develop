@@ -4,6 +4,11 @@ lgu.LGU_TARGET_TYPE_FATIGUE_M (Explorer Navigation hierarchy)
 =============================================================
 타겟유형 피로도 관리 Explorer.
 
+[Main Functions]
+===========
+- listdet: 피로도 목록 + 하단 폼
+- Rule 연동 삭제 command: DeleteWithRuleSync (OOTB adbdelete 대체)
+
 [Dependencies]
 =========
 - lgu:LGU_TARGET_TYPE_FATIGUE_M
@@ -12,8 +17,17 @@ lgu.LGU_TARGET_TYPE_FATIGUE_M (Explorer Navigation hierarchy)
 <navtree label="[LGU] 타겟유형 피로도" name="LGU_TARGET_TYPE_FATIGUE_M" namespace="lgu">
 
   <model name="root">
-    <nodeModel img="nms:typologyRule.png" label="[LGU] 타겟유형 피로도"
-               name="lguTargetTypeFatigue">
+    <nodeModel hiddenCommands="adbdelete" img="nms:typologyRule.png"
+               label="[LGU] 타겟유형 피로도" name="lguTargetTypeFatigue">
+      <command desc="Pressure Rule 연동 해제 후 피로도 행 삭제"
+               img="nms:delete.png" label="Rule 연동 삭제"
+               name="lguFatigueDeleteWithRuleSync"
+               promptLabel="선택한 피로도와 연결된 Pressure Rule(RLLgu*)을 함께 삭제합니다. 계속하시겠습니까?"
+               rights="delete">
+        <soapCall name="DeleteWithRuleSync" service="lgu:LGU_TARGET_TYPE_FATIGUE_M">
+          <param exprIn="@id" type="int"/>
+        </soapCall>
+      </command>
       <view name="listdet" schema="lgu:LGU_TARGET_TYPE_FATIGUE_M" type="listdet">
         <columns>
           <node xpath="@label"/>

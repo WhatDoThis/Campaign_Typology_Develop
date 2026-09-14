@@ -24,13 +24,13 @@ Delivery templates > Properties
 |------|-------------------------|--------------|
 | **Target population** | 비움 | WF upstream targeting |
 | **Scheduling expr** | `GetDate()` × 2 (권장) | clone 시 누락 가능 |
-| **contactDate (live)** | — | Control rule `lguEnsureDeliveryScheduling` preTarget 패치 |
+| **contactDateTimeZone** | `Asia/Seoul` (권장) | Control rule preTarget 패치 |
 
 OOTB WF clone 은 scheduling 을 **복사하지 않음**.  
-`lguEnsureDeliveryScheduling` 은 **scheduling expr + contactDate/extraction** 만 idempotent 패치 (live delivery + DB). Target/SENDER/MSG 복사 **없음**.
+`lguTypologyPressureAdapter` 는 **contactDate + extraction materialize** (live + DB) — Typology **Pressure arbitration** 용.  
+extractionExpr / contactDateExpr / content / SENDER / target — **건드리지 않음**.
 
-> `(immediately)` / live contactDate 빈값 → Pressure **No contact date**.  
-> 상세: [04_Phase3_Triggers.md](../typologyUpgrade/docs/packageRun/04_Phase3_Triggers.md) §3-4
+> 상세: [04_Phase3_Triggers.md](../../typologyUpgrade/docs/packageRun/04_Phase3_Triggers.md) §3-4
 
 **Save** (template — scheduling 은 Write 후 Resources 불필요 Save 금지)
 
@@ -45,9 +45,7 @@ Template(DM473) 은 **비어 있어도 됨**. WF 로 component 생성 후 **deli
 | 환경 | SENDER |
 |------|--------|
 | **STG / PRD** | Delivery UI Save — Control rule SENDER patch **없음** |
-| **Test** | UI Save 우선; Save 미반영 시에만 `lguTestEnsureDeliverySenderFromModel` fallback |
-
-Test SENDER fallback 은 STG/PRD Import/link **금지**.
+| **Test** | UI Save — SENDER fallback rule **Console 삭제 완료** ([04_Console_JS_Cleanup.md](04_Console_JS_Cleanup.md)) |
 
 ---
 
@@ -92,8 +90,6 @@ OOTB `hasDeliveryContent` 는 `@messageType > other`(120) 또는 html/sms 경로
 | **The delivery content has not been entered yet** | form expr 가 lguMMS MSG/SENDER 미인식 | Import 후 delivery **닫았다가 재오픈** → Send → Analyze (**Prepare**, not target-only) |
 | 정상 완료 | state **25/45**, broadLog ≥ 1 | — |
 
-Console Execute: `lguTestDeliveryPrepareDiag(<deliveryId>)` — `smsSource len`, state=15 경고 확인.
-
 ### WF Prepare — form 과 별개 경로
 
 Campaign/Recurring **WF** 는 `nms:delivery` input form 을 거치지 않음.  
@@ -101,39 +97,25 @@ OOTB campaign WF delivery activity 는 **PrepareTarget 만** 수행하는 경우
 
 | 단계 | journal / diag | 의미 |
 |------|----------------|------|
-| preTarget | `ensureDeliveryContentMirror` | MSG → `content/sms/source` OK |
-| PrepareTarget 끝 | `Analysis … (1 message(s) waiting)` | state **15**, broadLog **0** |
-| PrepareMessage | *(로그 없음)* | **WF 가 호출 안 함** |
+| preTarget | `typologyPressureAdapter: patched … live=yes contactDate=…` | Pressure arbitration OK |
+| PrepareTarget 끝 | `Analysis … (1 message(s) waiting)` | state **15**, broadLog **0** (TEST WF) |
+| PrepareMessage | *(로그 없음)* | **WF 가 호출 안 함** (TEST) / OOTB (STG) |
 
 | 조치 | Console / Typology |
 |------|---------------------|
-| content mirror | `lguEnsureDeliveryScheduling.js` Import — preTarget `ensureDeliveryPrepareForTypology` |
-| **PrepareMessage (Test only)** | Typology **postTarget** rule: `ensureDeliveryPrepareMessageForTypology(delivery)` — **WF js6 불필요** |
-| Console 격리 테스트 | `lguTestRunDeliveryPrepareMessage(<id>)` |
-| diag (최신 Import) | `smsSource len`, `linkedDelivery-id` 확인 |
+| contactDate materialize | `lguTypologyPressureAdapter.js` — preTarget `applyTypologyPressureAdapter` |
+| typology postTarget PrepareMessage | **금지** — PrepareTarget pass 중 `PrepareMessageImpl` → wkDlv 손상 |
 
-> **WF js6 사용 금지** — delivery 컴포넌트가 loading 상태로 유지되어 `vars.deliveryId` 를 받을 수 없음.  
-> Prepare pass **내부** typology postTarget 에서 in-memory `delivery` 로 `PrepareMessage` 호출.
+> typology **After targeting** rule 에서 `PrepareMessageImpl` 호출 시 `wkdlv_* does not exist` · Counting stuck · delivery 연쇄 생성.  
+> Test `lguTest*` JS · PrepareMessage Execute 스크립트 — Console **삭제 완료** ([04_Console_JS_Cleanup.md](04_Console_JS_Cleanup.md)).
 
-**Typology Control rule (Test only — At the end of targeting):**
+### STG 이관 범위
 
-```javascript
-loadLibrary("lgu:lguEnsureDeliveryScheduling.js");
-ensureDeliveryPrepareMessageForTypology(delivery);
-return true;
-```
+| 항목 | STG Import |
+|------|:----------:|
+| `lguTypologyPressureAdapter.js` + Control rule | ✅ |
 
-성공 journal: `ensureDeliveryPrepareMessageForTypology: ok … broadLog=1+`, state **25/45**.
-
-### TEST → STG 이관 범위
-
-| 항목 | TEST 검증 목적 | STG Import |
-|------|----------------|:----------:|
-| `lguEnsureDeliveryScheduling.js` + Control rule | scheduling expr/contactDate + content mirror | ✅ |
-| `lguTestRunDeliveryPrepareMessage.js` | TEST WF PrepareTarget-only 한계 **격리 검증** | ❌ |
-| `lguTest*` diag/seed | Console 디버그 | ❌ |
-
-**STG Prepare OK 조건 (발송 전):** journal `ensureDeliveryScheduling` + `ensureDeliveryContentMirror`, arbitration 로그, `toDeliver ≥ 1`.  
+**STG Prepare OK 조건 (발송 전):** journal `typologyPressureAdapter: patched` (또는 unchanged), arbitration 로그, `toDeliver ≥ 1`, OOTB broadLog.  
 STG 는 OOTB 가 PrepareMessage·발송까지 처리 — TEST 의 state 15 + broadLog 0 패턴과 **동일하지 않을 수 있음**.
 
 ---
@@ -155,8 +137,7 @@ STG 는 OOTB 가 PrepareMessage·발송까지 처리 — TEST 의 state 15 + bro
 | 1 | Template Typology | SMS/MMS fatigue |
 | 2 | WF Target | upstream targeting 설정 |
 | 3 | Scheduling | GetDate() × 2 |
-| 4 | Control rule | `RLCtrlEnsureScheduling` (STG/PRD/Test 공통) |
-| 4b | TEST SENDER rule | Test only — `RLCtrlEnsureSender_TEST` |
+| 4 | Control rule | `RLCtrlTypologyPressureAdapter` (STG/PRD/Test 공통) |
 | 5 | 타겟유형 | 발송 전 Save (`@LGU_TARGET_TYPE_M_NO`) |
 | 6 | Rule Quantity | fatigue와 일치 (All **10**, Type2 **2**) |
 | 7 | Re-apply at personalization | ✓ |

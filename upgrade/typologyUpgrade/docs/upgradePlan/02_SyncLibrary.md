@@ -24,7 +24,12 @@ lguFatigueRuleSync.js
 |------|------|
 | `syncFatigue(fatigueId)` | 1행 → Rule Write + Typology link |
 | `syncAll()` | `@managedBySync=true` 전체 reconcile |
-| `syncFatigueFromForm(fatigueId)` | form postSave entry |
+| `syncFatigueFromForm(fatigueId)` | form postSave — validate + ensure + sync |
+| `validateFatigueFromForm(fatigueId)` | cap/NO 중복 검증 |
+| `ensureFatigueMetadata(fatigueId)` | RLSmsMms* ruleInternalName · label 자동 |
+| `preDeleteFatigueFromForm(fatigueId)` | Rule만 삭제 (Console/WF — form preDelete **미지원**) |
+| form **Rule 연동 삭제** 버튼 | schema SOAP `DeleteWithRuleSync(@id)` |
+| `buildRuleInternalName(no)` | 0→RLSmsMmsAll, 32→RLSmsMmsType32 |
 | `syncFatigueDelete(ruleName, typoName)` | RLSmsMms* Rule 삭제 + unlink |
 | `deleteFatigueWithRuleSync(fatigueId)` | Rule + fatigue row 삭제 |
 | `syncAllScheduled()` | Technical WF entry |
@@ -66,8 +71,9 @@ lguFatigueRuleSync.js
 | 이벤트 | 동작 |
 |--------|------|
 | fatigue form Save | postSave → `syncFatigueFromForm` |
+| fatigue form Delete | **Rule 연동 삭제** 버튼 → `DeleteWithRuleSync` |
 | 일일 WF | `syncAllScheduled()` |
-| Explorer Delete | `DeleteWithRuleSync` (관리자) |
+| Explorer Delete | fatigue 행만 삭제 — **Rule orphan 주의** |
 
 ---
 

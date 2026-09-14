@@ -10,17 +10,18 @@ Administration > Configuration > Data schemas
 
 | 순서 | Import | schema |
 |------|--------|--------|
-| 1 | `schema/LGU_TARGET_TYPE_M.xml` | `lgu:LGU_TARGET_TYPE_M` |
-| 2 | `schema/LGU_TARGET_TYPE_FATIGUE_M.xml` | `lgu:LGU_TARGET_TYPE_FATIGUE_M` |
-| 3 | `schema/delivery_uplus.xml` | `uplus:delivery` (content/* 레거시) |
-| 4 | `schema/delivery_lgu.xml` | `lgu:delivery` (messageType, 피로도·성공지표) |
-| 5 | `schema/deliveryMapping_uplus.xml` | `uplus:deliveryMapping` (`@custmms`, `@lgu_mms`) |
-| 6 | `schema/deliveryMapping_lgu.xml` | `lgu:deliveryMapping` (`@lguMMS`) |
+| 1 | `typologyUpgrade/schema/LGU_TARGET_TYPE_M.xml` | `lgu:LGU_TARGET_TYPE_M` |
+| 2 | `typologyUpgrade/schema/LGU_TARGET_TYPE_FATIGUE_M.xml` | `lgu:LGU_TARGET_TYPE_FATIGUE_M` |
+| 3 | `shared/schema/delivery_uplus.xml` | `uplus:delivery` (content/* 레거시) |
+| 4 | `shared/schema/delivery_lgu.xml` | `lgu:delivery` (messageType, 피로도·성공지표) |
+| 5 | `shared/schema/deliveryMapping_uplus.xml` | `uplus:deliveryMapping` (`@custmms`, `@lgu_mms`) |
+| 6 | `shared/schema/deliveryMapping_lgu.xml` | `lgu:deliveryMapping` (`@lguMMS`) |
+| 7 | `typologyUpgrade/schema/typologyRule.xml` | `lgu:typologyRule` (Pressure Rule 채널 enum) |
 
 Save → **Tools > Advanced > Update database structure**
 
 > **JavaScript codes Internal name:** Repo 파일명과 동일 — **`.js` 접미사 포함**  
-> (예: `lguEnsureDeliveryScheduling.js`, `loadLibrary("lgu:lguEnsureDeliveryScheduling.js")`)
+> (예: `lguTypologyPressureAdapter.js`, `loadLibrary("lgu:lguTypologyPressureAdapter.js")`)
 
 > **폼 enum:** `deliveryCustomMMS` 발신번호는 `type="sysenum"` 만 사용.  
 > `enum="uplus:delivery:sender_list"` **금지** — Console 이 `uplus:delivery` srcSchema 를 직접 로드하려다 XSV-350000 발생.  
@@ -45,7 +46,7 @@ Stage `LGU_TARGET_TYPE_M` 데이터 적재 (NO, TYPE_DETAIL).
 
 ## 1-3. 피로도 관리 UI
 
-**패키지:** `typologyUpgrade/` — [packageRun/02_Phase1_Console_Import.md](../typologyUpgrade/docs/packageRun/02_Phase1_Console_Import.md)
+**패키지:** `typologyUpgrade/` — [packageRun/02_Phase1_Console_Import.md](../../typologyUpgrade/docs/packageRun/02_Phase1_Console_Import.md)
 
 | # | 작업 | 파일 |
 |---|------|------|
@@ -76,7 +77,7 @@ Console `nms:delivery` 에 ibank hook 이 남아 있으면 **제거**:
 ### B. SMS/MMS — `lgu:deliveryCustomMMS`
 
 ```
-Input forms → Import form/deliveryCustomMMS.xml
+Input forms → Import typologySetup/form/deliveryCustomMMS.xml
 ```
 
 MMS Delivery template / channel form 에 `lgu:deliveryCustomMMS` 연결.
@@ -109,12 +110,12 @@ mapping attribute 이름 = messageType `@name` 계약.
 **uplus:deliveryMapping 복구 + lguMMS 추가:**
 
 ```
-1. Data schemas → Import schema/deliveryMapping_uplus.xml → namespace uplus 확인 → Save
-2. Data schemas → Import schema/deliveryMapping_lgu.xml   → namespace lgu 확인 → Save
+1. Data schemas → Import shared/schema/deliveryMapping_uplus.xml → namespace uplus 확인 → Save
+2. Data schemas → Import shared/schema/deliveryMapping_lgu.xml   → namespace lgu 확인 → Save
 3. Tools → Advanced → Update database structure
 4. nms:deliveryMapping Preview → custmms, lgu_mms, lguMMS Attributes 확인
-5. (선택) `lguTestDeliveryMappingSchema.js` Execute
-6. nms:deliveryMapping → @lgu_mms 아래 @lguMMS pathEdit inline 추가 (form/deliveryMapping_lgu_hook.xml)
+5. (선택) mapping schema Preview 로 확인 — Test diag JS 는 Console 삭제 완료 ([04_Console_JS_Cleanup.md](04_Console_JS_Cleanup.md))
+6. nms:deliveryMapping → @lgu_mms 아래 @lguMMS pathEdit inline 추가 (typologySetup/form/deliveryMapping_lgu_hook.xml)
 ```
 
 > **주의:** `deliveryMapping_lgu.xml` 을 **uplus** namespace 에 Import 하면 uplus 원본이 덮어써짐.  
@@ -140,52 +141,30 @@ Console **Target mapping** (예: mapRecipient id=1671) → Mapping → Address:
 
 ### D. (선택) `lgu:delivery` lib
 
-`form/delivery_inputForm.xml` — **현재 nms:delivery ref 미사용**. Email 등 추후 채널 확장 시 lib 조각으로만 보관.
+`typologySetup/form/delivery_inputForm.xml` — **현재 nms:delivery ref 미사용**. Email 등 추후 채널 확장 시 lib 조각으로만 보관.
 
 ---
 
-## 1-4. JavaScript codes — Import / Delete
+## 1-5. JavaScript codes — Import (운영만)
 
 ```
 Administration > Configuration > JavaScript codes
 ```
 
-### STG / PRD Import (운영)
+| Internal name | Repo | Label | 용도 |
+|---------------|------|-------|------|
+| `lguTypologyPressureAdapter.js` | `typologySetup/js/` | [LGU] Typology Pressure Adapter | Control rule — contactDate + extraction materialize |
+| `lguFatigueRuleSync.js` | `typologyUpgrade/js/` | — | 피로도 Rule sync |
+| `custom_lms_mms.js` | `shared/js/` | — | External account delivery connector |
+| `deliveryCustomizing.js` | `typologySetup/js/` | — | MMS form lib |
 
-| Internal name | Label | 용도 |
-|---------------|-------|------|
-| `lguEnsureDeliveryScheduling.js` | [LGU] Ensure Delivery Scheduling | Control rule preTarget — scheduling expr + contactDate + content mirror |
-| `lguFatigueRuleSync.js` | (기존) | 피로도 Rule sync |
-
-> STG 는 OOTB Prepare·발송 경로가 이미 동작 → **`lguTestRunDeliveryPrepareMessage.js` Import 불필요**.
-
-**Control rule (STG/PRD):**
+**Control rule (STG/PRD/Test):**
 
 ```javascript
-loadLibrary("lgu:lguEnsureDeliveryScheduling.js");
-ensureDeliveryPrepareForTypology(delivery);
+loadLibrary("lgu:lguTypologyPressureAdapter.js");
+applyTypologyPressureAdapter(delivery);
 return true;
 ```
 
-### Test 전용 (`lguTest*` / Label `[LGU TEST] *`)
-
-| Internal name | Label | Execute 예 |
-|---------------|-------|------------|
-| `lguTestDeliveryPrepareDiag.js` | [LGU TEST] Delivery Prepare Diag | `lguTestDeliveryPrepareDiag(48521)` |
-| `lguTestRunDeliveryPrepareMessage.js` | [LGU TEST] Run Delivery Prepare Message | `lguTestRunDeliveryPrepareMessage(48521)` — WF PrepareTarget-only 검증 |
-| `lguTestDeliveryMappingSchema.js` | [LGU TEST] Delivery Mapping Schema | `lguTestDeliveryMappingSchema()` |
-| `lguTestListDeliveryMessageTypes.js` | [LGU TEST] List Delivery Message Types | `lguTestListDeliveryMessageTypes()` |
-| `lguTestInsertRecipients.js` | [LGU TEST] Insert Recipients | `lguTestInsertRecipients()` |
-| `lguTestEnsureDeliverySenderFromModel.js` | [LGU TEST] Ensure Delivery Sender From Model | Test Typology rule load only |
-
-### Console에서 삭제
-
-| Internal name | 사유 |
-|---------------|------|
-| `lguRunDeliveryPrepareMessage.js` | → `lguTestRunDeliveryPrepareMessage.js` (Test 전용) |
-| `validate_delivery_prepare_diag.js` | → `lguTestDeliveryPrepareDiag.js` |
-| `validate_delivery_prepareMessage.js` | 삭제 (중복) |
-| `validate_deliveryMapping_schema.js` | → `lguTestDeliveryMappingSchema.js` |
-| `list_delivery_messageTypes.js` | → `lguTestListDeliveryMessageTypes.js` |
-| `insert_test_recipients.js` | → `lguTestInsertRecipients.js` |
-| `lguEnsureDeliverySenderFromModel_TEST.js` | → `lguTestEnsureDeliverySenderFromModel.js` |
+> **Test `lguTest*` · 레거시 JS · Test Typology rule** — Console **삭제 완료** (2026-09-10).  
+> 상세: [04_Console_JS_Cleanup.md](04_Console_JS_Cleanup.md)

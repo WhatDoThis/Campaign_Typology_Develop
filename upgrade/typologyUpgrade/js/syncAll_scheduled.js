@@ -8,5 +8,5 @@
  * - lgu:lguFatigueRuleSync
  */
 
-loadLibrary("lgu:lguFatigueRuleSync");
+loadLibrary("lgu:lguFatigueRuleSync.js");
 syncAllScheduled();

@@ -3,24 +3,28 @@
 REFERENCE — Phase 0 Console Export로 교체.
 AREA: Application + Limit deliveries — @LGU_TARGET_TYPE_M_NO 동일.
 Channel [LGU] SMS/MMS (messageType=101)
+periodRanking=604800 (7d × 86400s) — schema timespan seconds
 -->
 <typologyRule _operation="insertOrUpdate" _key="@name"
                active="true" forceOnPrepareMessage="true" validity="0"
                label="[LGU] SMS/MMS Type 2 (template)" messageType="101"
-               name="RLSmsMmsType2" order="20" ruleType="businessRanking"
+               name="RLLguSmsMmsType2" order="20" ruleType="businessRanking"
                schema="nms:recipient" xtkschema="nms:typologyRule">
-  <contextFilter>
+  <contextFilter contextType="2">
     <where>
-      <condition expr="@LGU_TARGET_TYPE_M_NO" operator="=" value="2"/>
+      <condition bool-operator="AND" expr="@LGU_TARGET_TYPE_M_NO = 2"/>
     </where>
+    <humanCond>Query: 유형마스터번호 equal to 2</humanCond>
   </contextFilter>
   <businessRanking activeForecast="true" boxingUnit="0"
-                   periodRanking="7d" threshold="2" thresholdType="0">
+                   periodRanking="604800" threshold="2" thresholdLink="LGU_CUSTOMER_MAPPING"
+                   thresholdType="0">
     <weightFormula>5</weightFormula>
     <deliveryFilter>
       <where>
-        <condition expr="@LGU_TARGET_TYPE_M_NO" operator="=" value="2"/>
+        <condition bool-operator="AND" expr="@LGU_TARGET_TYPE_M_NO = 2"/>
       </where>
+      <humanCond>Query: 유형마스터번호 equal to 2</humanCond>
     </deliveryFilter>
   </businessRanking>
 </typologyRule>

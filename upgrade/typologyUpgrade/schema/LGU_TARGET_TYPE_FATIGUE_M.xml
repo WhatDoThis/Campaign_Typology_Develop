@@ -9,7 +9,7 @@ lguFatigueRuleSync.js 가 CRUD → nms:typologyRule Pressure Rule sync.
 [Main Functions]
 ===========
 - LGU_TARGET_TYPE_M_NO / TYPE_DETAIL: 타겟유형 마스터 참조 (값 복사)
-- ruleInternalName: nms:typologyRule @name (RLSmsMms* prefix)
+- ruleInternalName: nms:typologyRule @name (RLLgu{Channel}{All|TypeNo})
 - capCount / periodDays / messageType: Pressure Rule Quantity·Period·Channel
 - managedBySync: JS sync 대상 여부
 
@@ -17,7 +17,7 @@ lguFatigueRuleSync.js 가 CRUD → nms:typologyRule Pressure Rule sync.
 =======================
 - element LGU_TARGET_TYPE_FATIGUE_M
 - key messageTypeTargetKey, ruleNameKey
-- method DeleteWithRuleSync
+- method ValidateBeforeSave, PreDeleteRuleSync, SyncFromForm, DeleteWithRuleSync
 
 [Dependencies]
 =========
@@ -25,14 +25,16 @@ lguFatigueRuleSync.js 가 CRUD → nms:typologyRule Pressure Rule sync.
 - lgu:delivery (@LGU_TARGET_TYPE_M_NO — Pressure deliveryFilter)
 - lgu:lguFatigueRuleSync
 - nms:typologyRule, nms:typology
+- lgu:delivery:messageType (lguMMS=101 — typologyRule과 동일 template)
 -->
 <srcSchema _cs="[LGU] 타겟유형 피로도 (lgu)" created="2026-09-08 05:00:00.000Z"
            createdBy-id="0" entitySchema="xtk:srcSchema" img="nms:typologyRule.png"
            label="[LGU] 타겟유형 피로도" labelSingular="[LGU] 타겟유형 피로도"
-           lastModified="2026-09-08 05:00:00.000Z" mappingType="sql" modifiedBy-id="0"
+           lastModified="2026-09-11 02:20:00.000Z" mappingType="sql" modifiedBy-id="0"
            name="LGU_TARGET_TYPE_FATIGUE_M" namespace="lgu" xtkschema="xtk:srcSchema">
 
-  <enumeration name="messageType" template="nms:delivery:messageType"/>
+  <!-- nms:delivery:messageType에는 lguMMS(101) 없음 — lgu:delivery template 필수 -->
+  <enumeration name="messageType" template="lgu:delivery:messageType"/>
 
   <element autopk="true" label="[LGU] 타겟유형 피로도" name="LGU_TARGET_TYPE_FATIGUE_M"
            pkSequence="XtkNewId" sqltable="LGU_TARGET_TYPE_FATIGUE_M">
@@ -50,13 +52,13 @@ lguFatigueRuleSync.js 가 CRUD → nms:typologyRule Pressure Rule sync.
                sqlname="TYPE_DETAIL" type="string"/>
 
     <!-- Sync identity -->
-    <attribute desc="nms:typologyRule/@name. RLSmsMms prefix 필수."
+    <attribute desc="nms:typologyRule/@name. Save 시 sync가 RLLgu{Channel}{All|TypeNo} 자동 생성."
                label="Rule internal name" length="64" name="ruleInternalName"
-               required="true" type="string"/>
-    <attribute desc="연결 Typology @name."
+               type="string"/>
+    <attribute default="TYLguSmsMms" desc="연결 Typology @name. New 기본 TYLguSmsMms."
                label="Typology internal name" length="64" name="typologyInternalName"
-               required="true" type="string"/>
-    <attribute default="0" desc="Delivery @messageType. 0=Email 등."
+               type="string"/>
+    <attribute default="101" desc="Delivery @messageType. lguMMS=101 ([LGU] SMS/MMS)."
                enum="messageType" label="Message type" name="messageType"
                required="true" type="byte"/>
     <attribute default="10" label="Execution order" name="executionOrder" type="long"/>
@@ -80,10 +82,30 @@ lguFatigueRuleSync.js 가 CRUD → nms:typologyRule Pressure Rule sync.
   </element>
 
   <methods>
-    <method library="lgu:lguFatigueRuleSync" name="DeleteWithRuleSync" static="true">
-      <help>Deletes managed Pressure Rule (RLSmsMms*) then fatigue row.</help>
+    <method library="lgu:lguFatigueRuleSync.js" name="ValidateBeforeSave" static="true">
+      <help>Form leave — duplicate (messageType+NO) check before DB persist.</help>
       <parameters>
-        <param desc="Fatigue row id" inout="in" name="fatigueId" type="long"/>
+        <param desc="Message type" inout="in" name="messageType" type="byte"/>
+        <param desc="Target type NO (0=All)" inout="in" name="targetTypeNo" type="int"/>
+        <param desc="Fatigue row id (0 on New)" inout="in" name="fatigueId" type="int"/>
+      </parameters>
+    </method>
+    <method library="lgu:lguFatigueRuleSync.js" name="PreDeleteRuleSync" static="true">
+      <help>DeleteWithRuleSync 내부 — managed TYR unlink+delete (Explorer command).</help>
+      <parameters>
+        <param desc="Fatigue row id" inout="in" name="fatigueId" type="int"/>
+      </parameters>
+    </method>
+    <method library="lgu:lguFatigueRuleSync.js" name="SyncFromForm" static="true">
+      <help>Form postSave — validate, ensure metadata, sync to nms:typologyRule.</help>
+      <parameters>
+        <param desc="Fatigue row id" inout="in" name="fatigueId" type="int"/>
+      </parameters>
+    </method>
+    <method library="lgu:lguFatigueRuleSync.js" name="DeleteWithRuleSync" static="true">
+      <help>Deletes managed Pressure Rule (RLLgu*) then fatigue row.</help>
+      <parameters>
+        <param desc="Fatigue row id" inout="in" name="fatigueId" type="int"/>
       </parameters>
     </method>
   </methods>

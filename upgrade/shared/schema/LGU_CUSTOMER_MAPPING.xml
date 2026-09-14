@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+lgu.LGU_CUSTOMER_MAPPING ([LGU] 고객번호 매핑)
+================================================
+Pressure Rule linked dimension용 고객번호 마스터 테이블.
+recipient @CUST_ID_T 와 join 하여 thresholdLink 집계 키로 사용한다.
+
+[Main Functions]
+===========
+- @CUST_ID_T: 고객번호 natural key (Pressure grouping dimension)
+
+[Endpoints/Classes/Functions]
+=======================
+- element LGU_CUSTOMER_MAPPING: sqltable LGU_CUSTOMER_MAPPING
+- link recipient: nms:recipient 역방향 (동일 CUST_ID_T 다수 가입)
+
+[Dependencies]
+=========
+- uplus:recipient @CUST_ID_T (join source)
+- nms:typologyRule businessRanking/@thresholdLink → recipient/LGU_CUSTOMER_MAPPING link
+-->
+<srcSchema _cs="[LGU] 고객번호 매핑 (lgu)" created="2026-09-11 08:18:00.000Z" createdBy-id="0"
+           desc="Customer number mapping table for pressure linked-dimension grouping."
+           entitySchema="xtk:srcSchema" img="xtk:schema.png" label="[LGU] 고객번호 매핑"
+           labelSingular="[LGU] 고객번호 매핑" lastModified="2026-09-11 08:18:00.000Z"
+           mappingType="sql" modifiedBy-id="0" name="LGU_CUSTOMER_MAPPING" namespace="lgu"
+           xtkschema="xtk:srcSchema">
+  <createdBy _cs="우해인 (hiwoo)"/>
+  <modifiedBy _cs="우해인 (hiwoo)"/>
+
+  <element label="[LGU] 고객번호 매핑" name="LGU_CUSTOMER_MAPPING" sqltable="LGU_CUSTOMER_MAPPING">
+    <attribute label="고객번호 TEST" length="22" name="CUST_ID_T" required="true"
+               sqlname="CUST_ID_T" type="string"/>
+    <key label="[LGU] 고객번호 매핑 PK" name="LGU_CUSTOMER_MAPPING_PK">
+      <keyfield xpath="@CUST_ID_T"/>
+    </key>
+    <element label="Recipients" name="recipient" revIntegrity="define" revLink="LGU_CUSTOMER_MAPPING"
+             target="nms:recipient" type="link" unbound="true"/>
+  </element>
+</srcSchema>

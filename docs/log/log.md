@@ -2,6 +2,56 @@
 
 ## Log Index
 
+92. 2026-09-14 Test lguTest* archive 삭제 — Rank A 검증 후 Repo 정리
+91. 2026-09-11 acc-reference-index LGU Rank A thresholdLink canonical (iter 1)
+90. 2026-09-11 lguTestFixPressureRuleThresholdLink diag+repair JS
+89. 2026-09-11 lguTestSeedCustomerMapping Console JS — Rank A data seed
+88. 2026-09-11 recipient_uplus @CUST_ID_T + symmetric link join
+87. 2026-09-11 LGU_CUSTOMER_MAPPING Rank A linked dimension schema
+86. 2026-09-11 lguFatigueRuleSync repair/debug 제거 — 피로도 UI sync 본연 역할 복원
+85. 2026-09-11 All rule filter explicit delete on insertOrUpdate
+84. 2026-09-11 lguFatigueRuleSync verbose debug + repair periodDays fix
+83. 2026-09-11 repairManagedPressureRuleShells folder-id — TYR manual rule 호환
+82. 2026-09-11 repairManagedPressureRuleShells + thresholdLink @CUST_ID sync
+81. 2026-09-11 lguTestEnsureDeliverySenderFromModel getModelId 제거 — queryDef model resolve
+80. 2026-09-11 acc-reference-index thresholdLink·linked dimension·pressure mapping
+79. 2026-09-11 loadRuleTypologyIds TYLgu scan+count — @typology-id queryDef 금지
+78. 2026-09-11 loadRuleTypologyIds typologyRuleRel query — typology/@id XTK-170036
+77. 2026-09-11 ValidateBeforeSave SOAP long/int 재발 수정
+76. 2026-09-11 fatigue form preSave/preDelete 제거 — leave·navtree delete
+75. 2026-09-11 form Edit cap/period enter fix + Typology Edit relink
+74. 2026-09-11 fatigue preSave duplicate + preDelete Explorer TYR sync
+73. 2026-09-11 typologyRule filter humanCond + timespan suffix ref table
+72. 2026-09-11 periodRanking timespan seconds — fix BAS-010042 Pressure tab 7d
+71. 2026-09-11 typologyRule queryDef folder — [folder/@id] not @folder-id in select
+70. 2026-09-11 fix queryFirstRow @folder-id — nms:typology XTK-170036 on Save
+69. 2026-09-11 typologyRule folder-id=0 Explorer 미표시 — contextType·repairTypologyRuleFolder
+68. 2026-09-11 fatigue sync TYR — folder-id·typologies Write·link verify·diagFatigueSync
+67. 2026-09-11 fatigue SOAP param int + Typology /tmp/@typologyName preview
+66. 2026-09-11 fatigue Save fix — schema default TY·form leave·Typology setOnClick
+65. 2026-09-10 fatigue postSave SyncFromForm SOAP — xtk:javascript 제거
+64. 2026-09-10 fatigue schema messageType default 101 — New enum fix
+63. 2026-09-10 fatigue form New/Edit — _isNewEntity (notebook applicableIf 제거)
+62. 2026-09-10 fatigue form expression fix — [@id]·targetPickAll byte
+61. 2026-09-10 fatigue form Typology picker — where→sysFilter
+60. 2026-09-10 fatigue JS cleanup — legacy·one-off WF 제거
+59. 2026-09-10 fatigue form UI + RLLgu/TYLgu naming refactor
+58. 2026-09-10 fatigue schema messageType enum — lgu:delivery template
+57. 2026-09-10 fatigue form 줄바꿈 손상 복구 — 214→107 lines
+56. 2026-09-10 fatigue form preDelete 제거 — DeleteWithRuleSync 버튼
+55. 2026-09-10 fatigue form CRUD — New/Delete Rule auto sync
+54. 2026-09-10 lguFatigueRuleSync lastSyncAt formatDate fix
+53. 2026-09-10 lguFatigueRuleSync common.js 제거 — WF seed 호환
+52. 2026-09-10 Console JS 삭제 이력 정리 — lguTest* archive
+51. 2026-09-10 upgrade 패키지 분리 — typologySetup · typologyUpgrade · shared
+50. 2026-09-10 lguTypologyPressureAdapter — rename from lguEnsureDeliveryScheduling
+49. 2026-09-10 lguEnsureDeliveryScheduling — Pressure용 contactDate materialize only
+48. 2026-09-10 TEST 부록 JS 분리 — content mirror·scheduling materialize
+47. 2026-09-10 lguEnsureDeliveryScheduling scope — expr+tz only
+46. 2026-09-09 typology postTarget PrepareMessage 롤백 — wkDlv 손상
+45. 2026-09-09 PrepareMessageImpl — typology static type fix
+44. 2026-09-09 postTarget toDeliver=0 skip 제거 — live resolve
+43. 2026-09-09 live scheduling node fix — No contact date arbitration
 42. 2026-09-09 GitHub 초기 push — Campaign_Typology_Develop
 41. 2026-09-09 acc-reference-index PrepareMessage·postTarget·count delta
 40. 2026-09-09 postTarget ensureDeliveryPrepareMessageForTypology — WF js6 대체
@@ -46,6 +96,583 @@
 1. 2026-09-08 Ver.2 LGU_TARGET_TYPE_M_NO 필드 통일 및 배포 문서
 
 ## Log Body
+
+91. 2026-09-11 acc-reference-index LGU Rank A thresholdLink canonical (iter 1)
+
+Purpose: Agent 1 dual-algorithm — Test v7 9396 incident thresholdLink canonical value 및 invalid variants index화
+
+Changes:
+
+- Index lookup: LGU Rank A canonical `LGU_CUSTOMER_MAPPING`; invalid @CUST_ID_T / link/@attr / UI label
+- Project-local: recipient_uplus, LGU_CUSTOMER_MAPPING (Test fix JS는 §92에서 Repo 삭제)
+
+Changed files: .cursor/skills/acc-reference-validator/acc-reference-index.md, docs/log/log.md
+
+92. 2026-09-14 Test lguTest* archive 삭제 — Rank A 검증 후 Repo 정리
+
+Purpose: Campaign configuration 외 일회성 Test JS·seed·diag 제거
+
+Changes:
+
+- typologySetup/js/_archive/test/ 전체 삭제 (11 files)
+- 04_Console_JS_Cleanup §4-6, 01_DataModel §1-6, acc-reference-index·acc-patterns 갱신
+
+Changed files: upgrade/typologySetup/js/_archive/test/* (deleted), upgrade/typologySetup/docs/04_Console_JS_Cleanup.md, upgrade/typologySetup/README.md, upgrade/typologyUpgrade/docs/upgradePlan/01_DataModel.md, .cursor/skills/acc-reference-validator/acc-reference-index.md, .cursor/skills/acc-pipeline-orchestrator/acc-patterns.md, .cursor/rules/adobe-acc-orchestrator.mdc, docs/log/log.md
+
+90. 2026-09-11 lguTestFixPressureRuleThresholdLink diag+repair JS
+
+Purpose: thresholdLink invalid path (@CUST_ID_T, link/@attr) 진단 및 LGU_CUSTOMER_MAPPING link name Write
+
+Changes:
+
+- lguTestDiagPressureRuleThresholdLink / lguTestFixPressureRuleThresholdLink
+
+Changed files: upgrade/typologySetup/js/_archive/test/lguTestFixPressureRuleThresholdLink.js, docs/log/log.md
+
+89. 2026-09-11 lguTestSeedCustomerMapping Console JS — Rank A data seed
+
+Purpose: raw SQL 대신 ACC queryDef+Write로 CUST_ID_T backfill 및 LGU_CUSTOMER_MAPPING upsert
+
+Changes:
+
+- lguTestBackfillRecipientCustIdT / lguTestSeedLguCustomerMapping / lguTestSeedCustomerMappingAll
+
+Changed files: upgrade/typologySetup/js/_archive/test/lguTestSeedCustomerMapping.js, docs/log/log.md
+
+88. 2026-09-11 recipient_uplus @CUST_ID_T + symmetric link join
+
+Purpose: Rank A link join 양쪽 @CUST_ID_T 정렬 (mapping 스키마와 동일 필드명)
+
+Changes:
+
+- recipient_uplus: @CUST_ID_T attribute 추가 (label 고객번호 TEST)
+- LGU_CUSTOMER_MAPPING link join xpath-src/dst 모두 @CUST_ID_T
+
+Changed files: default/schema/recipient_uplus.xml, upgrade/shared/schema/LGU_CUSTOMER_MAPPING.xml, docs/log/log.md
+
+87. 2026-09-11 LGU_CUSTOMER_MAPPING Rank A linked dimension schema
+
+Purpose: Pressure thresholdLink Rank A — Adobe linked dimension 패턴 (customer mapping table + recipient link)
+
+Changes:
+
+- lgu:LGU_CUSTOMER_MAPPING schema (@CUST_ID_T PK)
+- uplus:recipient link LGU_CUSTOMER_MAPPING (join @CUST_ID → @CUST_ID_T)
+- lguFatigueRuleSync thresholdLink → LGU_CUSTOMER_MAPPING
+- pressureRule templates thresholdLink 갱신
+
+Changed files: upgrade/shared/schema/LGU_CUSTOMER_MAPPING.xml, default/schema/recipient_uplus.xml, upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, upgrade/typologyUpgrade/js/templates/pressureRule_*.xml, upgrade/shared/README.md, docs/log/log.md
+
+86. 2026-09-11 lguFatigueRuleSync repair/debug 제거 — 피로도 UI sync 본연 역할 복원
+
+Purpose: repairManagedPressureRuleShells·dbg·_operation=delete hack 제거 — TYR Rule은 OOTB UI/fatigue UI로 관리
+
+Changes:
+
+- repairManagedPressureRuleShells, lguFatigueDbg*, filter delete marker 삭제
+- buildPressureRuleXml(row) 단일 시그니처 복원; thresholdLink=@CUST_ID 유지
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, docs/log/log.md
+
+85. 2026-09-11 All rule filter explicit delete on insertOrUpdate
+
+Purpose: RLLguSmsMmsAll repair 후에도 TYR empty filter shell 잔존 방지 (XTK-170036)
+
+Changes:
+
+- buildPressureRuleXml All(typeNo=0): contextFilter/deliveryFilter _operation=delete
+- lguFatigueXmlHasRealChild: dbg summary E4X false positive 제거
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, docs/log/log.md
+
+84. 2026-09-11 lguFatigueRuleSync verbose debug + repair periodDays fix
+
+Purpose: WKF234/js3 SCR-160012 — repair 실행 단계 journal 추적 + periodDays 누락 throw 수정
+
+Changes:
+
+- lguFatigueDbg / lguFatigueDbgRuleXmlSummary / lguFatigueDbgFolderSources 추가
+- repairManagedPressureRuleShells: step별 로그, rule별 try/catch, verifyAfterWrite
+- buildPressureRuleXml / writeRule / buildPeriodRankingTimespan 디버그 로그
+- repair spec에 periodDays=7 추가 (buildPeriodRankingTimespan 필수)
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, docs/log/log.md
+
+83. 2026-09-11 repairManagedPressureRuleShells folder-id — TYR manual rule 호환
+
+Purpose: WKF234/js3 SCR-160012 — repair 시 buildPressureRuleXml folder throw 방지
+
+Changes:
+
+- buildPressureRuleXml(row, folderIdOverride): optional folder
+- repairManagedPressureRuleShells: getRuleFolderId(existing) 우선, 없으면 skip
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, docs/log/log.md
+
+82. 2026-09-11 repairManagedPressureRuleShells + thresholdLink @CUST_ID sync
+
+Purpose: XTK-170036 trailing AND — Console empty contextFilter/deliveryFilter shell 제거·고객번호 집계
+
+Changes:
+
+- buildPressureRuleXml: thresholdLink=@CUST_ID
+- repairManagedPressureRuleShells(): RLLguSmsMmsAll/Type2 clean Write
+- pressureRule templates: thresholdLink 추가
+- lguTestEnsureDeliverySenderFromModel: @deliveryModel-id query 제거
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, upgrade/typologyUpgrade/js/templates/pressureRule_*.template.xml, upgrade/typologySetup/js/_archive/test/lguTestEnsureDeliverySenderFromModel.js, docs/log/log.md
+
+81. 2026-09-11 lguTestEnsureDeliverySenderFromModel getModelId 제거 — queryDef model resolve
+
+Purpose: Test Control rule JST-310000 — lguTypologyPressureAdapter에 getModelId 없음
+
+Changes:
+
+- lguSenderTestResolveModelId: [@recurringDelivery-id] 우선, [@deliveryModel-id] fallback
+- shouldPatchSender / loadModelSender / patchSenderFromModel: getModelId 호출 제거
+
+Changed files: upgrade/typologySetup/js/_archive/test/lguTestEnsureDeliverySenderFromModel.js, docs/log/log.md
+
+80. 2026-09-11 acc-reference-index thresholdLink·linked dimension·pressure mapping
+
+Purpose: Agent 1 feasibility validation — phone send vs customerNo fatigue aggregation; index catalog gap fill
+
+Changes:
+
+- acc-reference-index: thresholdLink, linked dimension, pressure targeting vs mapping address, target mapping broadLog keys
+- Changelog 2026-09-11 delta
+
+Changed files: .cursor/skills/acc-reference-validator/acc-reference-index.md
+
+79. 2026-09-11 loadRuleTypologyIds TYLgu scan+count — @typology-id queryDef 금지
+
+Purpose: @typology-id queryDef expr → @typology−id parse (Attribute typology unknown on typologyRuleRel)
+
+Changes:
+
+- loadRuleTypologyIds: TYLgu% typology @id select + isRuleTypologyLinkedViaRuleCount per id
+- acc-patterns: queryDef @typology-id 금지 (Write FK와 분리) 명시
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, acc-patterns.md
+
+78. 2026-09-11 loadRuleTypologyIds typologyRuleRel query — typology/@id XTK-170036
+
+Purpose: syncFatigueFromForm Save 시 relinkRuleToTypology — typology/@id get queryDef parse 실패
+
+Changes:
+
+- loadRuleTypologyIds: nms:typologyRuleRel select @typology-id WHERE [@rule-id]= (FK 직접)
+- acc-patterns: list linked typo ids 패턴 추가
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, acc-patterns.md
+
+77. 2026-09-11 ValidateBeforeSave SOAP long/int 재발 수정
+
+Purpose: log #74 ValidateBeforeSave 추가 시 @LGU_TARGET_TYPE_M_NO type=long 으로 log #67 int 규칙 역행 → Save long/int SOAP 오류
+
+Changes:
+
+- form leave ValidateBeforeSave: @LGU_TARGET_TYPE_M_NO param type int
+- schema ValidateBeforeSave: targetTypeNo param type int (entity attribute long 과 분리)
+- acc-patterns: fatigue soapCall param type 표 + log grep 필수 명시
+
+Changed files: form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml, schema/LGU_TARGET_TYPE_FATIGUE_M.xml, acc-patterns.md
+
+76. 2026-09-11 fatigue form preSave/preDelete 제거 — leave·navtree delete
+
+Purpose: xtk:form preSave/preDelete XSV 오류 수정; Explorer Delete 시 TYR 잔존 방지
+
+Changes:
+
+- form: preSave/preDelete 제거 — ValidateBeforeSave를 leave로 이동
+- navtree: hiddenCommands adbdelete + Rule 연동 삭제 command → DeleteWithRuleSync
+- acc-patterns: preSave/preDelete 미지원 명시
+
+Changed files: form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml, navtree/LGU_TARGET_TYPE_FATIGUE_M_navtree.xml, schema/LGU_TARGET_TYPE_FATIGUE_M.xml, js/lguFatigueRuleSync.js, acc-patterns.md
+
+75. 2026-09-11 form Edit cap/period enter fix + Typology Edit relink
+
+Purpose: Nav Edit 시 capCount/periodDays 기본값 덮어쓰기; Typology 변경 지원
+
+Changes:
+
+- form enter: New만 default set — Edit는 DB 값 유지 + /tmp targetPick/typology seed
+- Typology 탭: New/Edit 공통 picker (Save 시 relink)
+- relinkRuleToTypology: 기존 Typology unlink 후 신규 link
+
+Changed files: form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml, js/lguFatigueRuleSync.js
+
+74. 2026-09-11 fatigue preSave duplicate + preDelete Explorer TYR sync
+
+Purpose: duplicate (messageType+NO) DB 에러 사전 차단; Explorer Delete TYR 잔존 방어
+
+Changes:
+
+- ValidateBeforeSave / PreDeleteRuleSync schema SOAP + form preSave/preDelete
+- validateFatigueDuplicateBeforeSave: messageTypeTargetKey 중복 메시지
+
+Changed files: lguFatigueRuleSync.js, schema/LGU_TARGET_TYPE_FATIGUE_M.xml, form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml, acc-patterns.md
+
+73. 2026-09-11 typologyRule filter humanCond + timespan suffix ref table
+
+Purpose: Application/Limit deliveries Operator·Value 빈 UI — condition Write 형식 교정
+
+Changes:
+
+- buildTargetTypeContextFilter/DeliveryFilter: expr 전체 + humanCond (Console conditionlist)
+- acc-patterns: timespan suffix(s/m/h/d/w) vs Write seconds 표
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, js/templates/pressureRule_area.template.xml, acc-patterns.md
+
+72. 2026-09-11 periodRanking timespan seconds — fix BAS-010042 Pressure tab 7d
+
+Purpose: TYR Pressure tab BAS-010042 — periodRanking "7d" invalid for timespan UI
+
+Changes:
+
+- buildPeriodRankingTimespan: periodDays × 86400 (schema type timespan)
+- templates: periodRanking 604800 (7d)
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, js/templates/pressureRule_*.template.xml, acc-patterns.md
+
+71. 2026-09-11 typologyRule queryDef folder — [folder/@id] not @folder-id in select
+
+Purpose: syncFatigueFromForm XTK-170036 on nms:typologyRule — queryDef select @folder-id 금지
+
+Changes:
+
+- queryFirstTypologyRuleRow / resolveTypologyRuleFolderId: `[folder/@id]` alias
+- getRuleFolderId: query 결과 folder-id 통합 read
+- acc-patterns: typologyRule folder queryDef vs Write 표
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, .cursor/skills/acc-pipeline-orchestrator/acc-patterns.md
+
+70. 2026-09-11 fix queryFirstRow @folder-id — nms:typology XTK-170036 on Save
+
+Purpose: syncFatigueFromForm Save 시 loadTypologyByName queryDef @folder-id parse 오류
+
+Changes:
+
+- queryFirstRow: @id/@name only (공용)
+- queryFirstTypologyRuleRow: typologyRule 전용 @folder-id select
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js
+
+69. 2026-09-11 typologyRule folder-id=0 Explorer 미표시 — contextType·repairTypologyRuleFolder
+
+Purpose: DB에 Rule 존재(id 49360)하나 Console TYR Explorer 미표시 — folder-id=0 확인
+
+Changes:
+
+- buildPressureRuleXml: folder-id 필수(미해결 시 throw), contextFilter contextType=2(Delivery)
+- repairTypologyRuleFolder(ruleName): peer RLLguSmsMmsAll folder-id 복사
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js
+
+68. 2026-09-11 fatigue sync TYR — folder-id·typologies Write·link verify·diagFatigueSync
+
+Purpose: fatigue OK인데 nms:typologyRule 미생성/미표시 — sync 강화
+
+Changes:
+
+- buildPressureRuleXml: peer Rule folder-id 복사, typologies Write
+- syncFatigueRow: Write 후 assertRuleExists, link verify, lastSyncStatus에 ruleId/typoId
+- syncFatigueFromForm: forceManaged — silent SKIP 금지
+- diagFatigueSync(fatigueId): Console 진단
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js
+
+67. 2026-09-11 fatigue SOAP param int + Typology /tmp/@typologyName preview
+
+Purpose: Save SOAP long/int mismatch; Typology Internal name UI 미반영
+
+Changes:
+
+- schema SyncFromForm/DeleteWithRuleSync: fatigueId type int
+- form postSave/Delete: param type int (OOTB delivery.xml 패턴)
+- Typology 선택 preview: /tmp/@typologyName → leave 시 @typologyInternalName
+- validateFatigueFromForm: typologyInternalName 비어 있으면 채널 default TY fallback (orphan row 복구)
+
+Changed files: upgrade/typologyUpgrade/schema/LGU_TARGET_TYPE_FATIGUE_M.xml, form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml, js/lguFatigueRuleSync.js
+
+66. 2026-09-11 fatigue Save fix — schema default TY·form leave·Typology setOnClick
+
+Purpose: Save 후 ruleInternalName/TY 비어 있음 + xtk:javascript 오류 지속 대응
+
+Changes:
+
+- schema: typologyInternalName default TYLguSmsMms, ruleInternalName required 제거(sync가 채움)
+- form: form-level leave 기본값 보강, Typology setOnClick+enter 즉시 preview, lastModified bump
+
+Changed files: upgrade/typologyUpgrade/schema/LGU_TARGET_TYPE_FATIGUE_M.xml, form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml
+
+65. 2026-09-10 fatigue postSave SyncFromForm SOAP — xtk:javascript 제거
+
+Purpose: Save SOP-330005 xtk:javascript 미구현 — schema method SOAP으로 Rule sync
+
+Changes:
+
+- LGU_TARGET_TYPE_FATIGUE_M: SyncFromForm schema method 추가
+- lguFatigueRuleSync: lgu_LGU_TARGET_TYPE_FATIGUE_M_SyncFromForm
+- inputForm postSave → SyncFromForm; Typology 탭 linkListChoice + 선택 preview frame
+
+Changed files: upgrade/typologyUpgrade/schema/LGU_TARGET_TYPE_FATIGUE_M.xml, js/lguFatigueRuleSync.js, form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml
+
+64. 2026-09-10 fatigue schema messageType default 101 — New enum fix
+
+Purpose: New form 채널 필드 messageType=0 enum 오류 — lgu enum에 101만 유효
+
+Changes:
+
+- LGU_TARGET_TYPE_FATIGUE_M.xml: messageType default 0 → 101
+- inputForm enter: set value="101"
+
+Changed files: upgrade/typologyUpgrade/schema/LGU_TARGET_TYPE_FATIGUE_M.xml, upgrade/typologyUpgrade/form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml
+
+63. 2026-09-10 fatigue form New/Edit — _isNewEntity (notebook applicableIf 제거)
+
+Purpose: [@id]=0 notebook applicableIf parse fail — xtk:form 탭에 PK expr 불가
+
+Changes:
+
+- Typology 탭: applicableIf 제거 → visibleGroup + [/ignored/@_isNewEntity]
+- Delete 버튼·enter 분기: 동일 _isNewEntity 패턴 (OOTB delivery.xml)
+- postSave/soapCall: @id (entity context)
+
+Changed files: upgrade/typologyUpgrade/form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml
+
+62. 2026-09-10 fatigue form expression fix — [@id]·targetPickAll byte
+
+Purpose: form open 오류 — @id unknown, targetPickMode string boolean parse fail
+
+Changes:
+
+- applicableIf/visibleIf: @id → [@id] (xtk:form PK bracket notation)
+- targetPickMode string → /tmp/@targetPickAll byte (0=유형지정, 1=All) — OOTB planningType 패턴
+- postSave/Delete SOAP param: [@id]
+
+Changed files: upgrade/typologyUpgrade/form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml
+
+61. 2026-09-10 fatigue form Typology picker — where→sysFilter
+
+Purpose: form Import 오류 — linkListChoice 내 where 는 xtk:form schema 미지원
+
+Changes:
+
+- Typology 탭 linkListChoice: `<where>` → `<sysFilter>` (OOTB delivery.xml 패턴)
+
+Changed files: upgrade/typologyUpgrade/form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml
+
+60. 2026-09-10 fatigue JS cleanup — legacy·one-off WF 제거
+
+Purpose: STG/PRD 이관용 Console 산출물만 유지 — RLSmsMms legacy·1회성 WF 스크립트 제거
+
+Changes:
+
+- lguFatigueRuleSync: LEGACY prefix·preDelete·assertManagedRuleWrite 제거; syncAll에 ensureFatigueMetadata 선행
+- 삭제: seed_fatigue_wf, migrate_fatigue_rows, repair_fatigue_meta_wf, seed_master_wf, phase0_validate_write
+- typologyUpgrade/docs/README.md: js 목록 정리
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, upgrade/typologyUpgrade/docs/README.md (deleted 5 js files)
+
+59. 2026-09-10 fatigue form UI + RLLgu/TYLgu naming refactor
+
+Purpose: form UX 개선(All 선택·Typology 탭·레이아웃) + Rule/TY internal name RLLgu/TYLgu 전환
+
+Changes:
+
+- inputForm: 채널 All 라디오·Typology 탭(New)·padding·우선순위·집계기간 재배치
+- lguFatigueRuleSync: RLLgu{Channel}{All|TypeNo}, CHANNEL_CONFIG, duplicate rule name guard
+- seed/migrate/repair WF + templates: TYLguSmsMms, RLLguSmsMms*
+
+Changed files: upgrade/typologyUpgrade/form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml, upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, seed_fatigue_wf.js, migrate_fatigue_rows.js, repair_fatigue_meta_wf.js, js/templates/*.xml, schema/LGU_TARGET_TYPE_FATIGUE_M.xml
+
+58. 2026-09-10 fatigue schema messageType enum — lgu:delivery template
+
+Purpose: form 채널 필드 101 enum 오류 — nms template에 lguMMS(101) 미포함
+
+Changes:
+
+- LGU_TARGET_TYPE_FATIGUE_M.xml: messageType template → lgu:delivery:messageType (typologyRule 동일)
+- inputForm: 채널 readOnly 고정 (SMS/MMS 전용)
+
+Changed files: upgrade/typologyUpgrade/schema/LGU_TARGET_TYPE_FATIGUE_M.xml, upgrade/typologyUpgrade/form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml
+
+57. 2026-09-10 fatigue form 줄바꿈 손상 복구 — 214→107 lines
+
+Purpose: per-line blank artifact(줄마다 빈 줄)로 214 lines 부풀림 — ACC form Import 실패 대응
+
+Changes:
+
+- LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml 전체 재작성 (107 lines, LF only)
+- postSave syncFatigueFromForm + DeleteWithRuleSync 버튼 유지
+
+Changed files: upgrade/typologyUpgrade/form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml
+
+56. 2026-09-10 fatigue form preDelete 제거 — DeleteWithRuleSync 버튼
+
+Purpose: xtk:form preDelete 미지원(XSV) — schema SOAP Delete 버튼으로 Rule+fatigue 삭제
+
+Changes:
+
+- form: preDelete 제거, 연동 상태 탭 Rule 연동 삭제 버튼
+- 02_SyncLibrary: Delete 트리거 문서 갱신
+
+Changed files: upgrade/typologyUpgrade/form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml, upgrade/typologyUpgrade/docs/upgradePlan/02_SyncLibrary.md, docs/log/log.md
+
+55. 2026-09-10 fatigue form CRUD — New/Delete Rule auto sync
+
+Purpose: 피로도 UI New/Delete 시 RLSmsMms* Rule 자동 생성·삭제
+
+Changes:
+
+- lguFatigueRuleSync: buildRuleInternalName, validate, ensure, preDeleteFatigueFromForm
+- form: enter defaults, preDelete, postSave validate+sync
+- seed_master_wf.js 추가
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, upgrade/typologyUpgrade/form/LGU_TARGET_TYPE_FATIGUE_M_inputForm.xml, upgrade/typologyUpgrade/js/seed_master_wf.js, upgrade/typologyUpgrade/docs/upgradePlan/02_SyncLibrary.md, docs/log/log.md
+
+54. 2026-09-10 lguFatigueRuleSync lastSyncAt formatDate fix
+
+Purpose: syncFatigue updateFatigueSyncStatus — raw Date → TIM-030009 해소
+
+Changes:
+
+- lguFatigueAccDateTimeNow(): formatDate(getCurrentDate(), "%4Y-%2M-%2D %2H:%2N:%2S")
+- updateFatigueSyncStatus: lastSyncAt formatted string
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, docs/log/log.md
+
+53. 2026-09-10 lguFatigueRuleSync common.js 제거 — WF seed 호환
+
+Purpose: WF seed 실행 시 XSV-350000 xtk:shared/common.js load 실패 해소
+
+Changes:
+
+- lguFatigueRuleSync.js: loadLibrary common.js 제거 (getCurrentDate OOTB)
+- seed_fatigue_wf.js: WF seed + syncAll (loadLibrary 없음)
+
+Changed files: upgrade/typologyUpgrade/js/lguFatigueRuleSync.js, upgrade/typologyUpgrade/js/seed_fatigue_wf.js, docs/log/log.md
+
+52. 2026-09-10 Console JS 삭제 이력 정리 — lguTest* archive
+
+Purpose: Console Test·레거시 JS 정리 완료 반영 — 운영 코드만 typologySetup/js 유지
+
+Changes:
+
+- 04_Console_JS_Cleanup.md: 삭제 완료 목록 (Test JS, 레거시, Test Typology rule)
+- lguTest*.js → typologySetup/js/_archive/test/
+- 01_Console_Setup, 03_Delivery_Prepare, 04_Phase3_Triggers: Test Import 절 제거·cleanup 링크
+
+Changed files: upgrade/typologySetup/docs/04_Console_JS_Cleanup.md, upgrade/typologySetup/js/_archive/test/*, upgrade/typologySetup/docs/*.md, upgrade/typologyUpgrade/docs/packageRun/04_Phase3_Triggers.md, docs/log/log.md
+
+51. 2026-09-10 upgrade 패키지 분리 — typologySetup · typologyUpgrade · shared
+
+Purpose: upgrade/ 하위를 스케줄링 셋업(완료)·피로도 CRUD·공통 delivery 로 모듈 분리
+
+Changes:
+
+- typologySetup: docs, form, js (Pressure Adapter, lguTest*, deliveryCustomizing)
+- typologyUpgrade: schema (LGU_TARGET_TYPE_*, typologyRule), fatigue form/navtree/sync JS
+- shared: delivery·deliveryMapping schema, custom_lms_mms.js
+- default/js: delivery.js, dlvUtils.js, deliverabilityClient-v2.js (OOTB 이관)
+- upgrade/README.md, shared/README.md, typologySetup/README.md 신규
+- docs·acc-reference-index 경로 갱신
+
+Changed files: upgrade/** (restructure), default/js/*, docs/log/log.md, .cursor/AGENTS.md, acc-reference-index.md
+
+50. 2026-09-10 lguTypologyPressureAdapter — rename from lguEnsureDeliveryScheduling
+
+Purpose: STG/PRD 배포용 Pressure lib 명칭 정리 — 목적(Typology Pressure)이 드러나도록 rename
+
+Changes:
+
+- lguEnsureDeliveryScheduling.js → lguTypologyPressureAdapter.js
+- entry: applyTypologyPressureAdapter / applyTypologyPressureAdapterById
+- journal prefix: typologyPressureAdapter: patched
+- docs·TEST 참조 일괄 갱신
+
+Changed files: upgrade/typologyUpgrade/js/lguTypologyPressureAdapter.js, upgrade/typologyUpgrade/js/lguTest*.js, upgrade/js/lguTestRunDeliveryPrepareMessage.js, upgrade/docs/01_Console_Setup.md, upgrade/docs/03_Delivery_Prepare.md, upgrade/typologyUpgrade/docs/packageRun/04_Phase3_Triggers.md, acc-patterns.md
+
+49. 2026-09-10 lguEnsureDeliveryScheduling — Pressure용 contactDate materialize only
+
+Purpose: extExpr/conExpr 는 Pressure 미적용 — 근본 목적(arbitration)에 맞게 contactDate/extraction materialize 만 유지
+
+Changes:
+
+- lguEnsureDeliveryScheduling.js: expr 패치 제거, live+DB contactDate/extraction materialize
+- lguTestEnsureDeliverySchedulingMaterialize.js: main lib alias
+
+Changed files: upgrade/typologyUpgrade/js/lguEnsureDeliveryScheduling.js, upgrade/typologyUpgrade/js/lguTestEnsureDeliverySchedulingMaterialize.js, upgrade/docs/01_Console_Setup.md, acc-patterns.md
+
+48. 2026-09-10 TEST 부록 JS 분리 — content mirror·scheduling materialize
+
+Purpose: STG lib 는 expr+tz only — TEST 전용 제거 기능을 별도 lguTest* JS 로 분리
+
+Changes:
+
+- lguTestEnsureDeliveryContentMirror.js (ensureDeliveryContentMirrorForTypology)
+- lguTestEnsureDeliverySchedulingMaterialize.js (ensureDeliverySchedulingMaterializeForTypology)
+- 01_Console_Setup.md, 04_Phase3_Triggers.md TEST optional rule 안내
+
+Changed files: upgrade/typologyUpgrade/js/lguTestEnsureDeliveryContentMirror.js, upgrade/typologyUpgrade/js/lguTestEnsureDeliverySchedulingMaterialize.js, upgrade/docs/01_Console_Setup.md, upgrade/typologyUpgrade/docs/packageRun/04_Phase3_Triggers.md
+
+47. 2026-09-10 lguEnsureDeliveryScheduling scope — expr+tz only
+
+Purpose: STG 적용 범위 — content mirror·contactDate/extraction/delayed 제거, extExpr+conExpr+tz 만
+
+Changes:
+
+- lguEnsureDeliveryScheduling.js: content mirror·PrepareMessage·postTarget helper 제거
+- patchScheduling: extractionExpr, contactDateExpr, contactDateTimeZone only
+- lguTestRunDeliveryPrepareMessage.js: PrepareMessageImpl inline
+
+Changed files: upgrade/typologyUpgrade/js/lguEnsureDeliveryScheduling.js, upgrade/js/lguTestRunDeliveryPrepareMessage.js, upgrade/docs/03_Delivery_Prepare.md, upgrade/docs/01_Console_Setup.md, upgrade/typologyUpgrade/docs/packageRun/04_Phase3_Triggers.md, acc-patterns.md
+
+46. 2026-09-09 typology postTarget PrepareMessage 롤백 — wkDlv 손상
+
+Purpose: postTarget PrepareMessageImpl → wkdlv_* missing, Counting stuck, recurring delivery 연쇄 생성
+
+Changes:
+
+- ensureDeliveryPrepareMessageForTypology: no-op + warning (typology 호출 금지)
+- lguPrepareRunPrepareMessage: Console/WF 전용
+- 03_Delivery_Prepare.md, 04_Phase3_Triggers.md, acc-patterns.md 갱신
+
+Changed files: upgrade/typologyUpgrade/js/lguEnsureDeliveryScheduling.js, upgrade/js/lguTestRunDeliveryPrepareMessage.js, upgrade/docs/03_Delivery_Prepare.md, upgrade/typologyUpgrade/docs/packageRun/04_Phase3_Triggers.md, acc-patterns.md
+
+45. 2026-09-09 PrepareMessageImpl — typology static type fix
+
+Purpose: postTarget nms.delivery.PrepareMessage(liveDelivery) → Method not of static type (16384)
+
+Changes:
+
+- lguPrepareInvokePrepareMessage: queryDef get + nms.delivery.create().PrepareMessageImpl()
+- lguTestRunDeliveryPrepareMessage.js 동일 패턴
+
+Changed files: upgrade/typologyUpgrade/js/lguEnsureDeliveryScheduling.js, upgrade/js/lguTestRunDeliveryPrepareMessage.js, acc-patterns.md
+
+44. 2026-09-09 postTarget toDeliver=0 skip 제거 — live resolve
+
+Purpose: After targeting postTarget js 시점에 DB properties/@toDeliver 아직 0 — PrepareMessage skip
+
+Changes:
+
+- lguPrepareResolveToDeliver: live delivery.properties.toDeliver 우선
+- snap/live=0 이면 postTarget proceed (broadLog guard 유지)
+
+Changed files: upgrade/typologyUpgrade/js/lguEnsureDeliveryScheduling.js, acc-patterns.md
+
+43. 2026-09-09 live scheduling node fix — No contact date arbitration
+
+Purpose: WF component live delivery 에 scheduling 노드 없음 → DB patch 만 되고 arbitration 실패
+
+Changes:
+
+- lguPrepareEnsureLiveSchedulingNode, lguPrepareForceLiveSchedulingMaterialized 추가
+- preTarget/postTarget enter 로그, DB-only patch 후 live sync
+
+Changed files: upgrade/typologyUpgrade/js/lguEnsureDeliveryScheduling.js
 
 42. 2026-09-09 GitHub 초기 push — Campaign_Typology_Develop
 

@@ -13,14 +13,28 @@ Adobe Campaign(ACC) 관련 **모든** 요청·분석·수정·검증·결과 제
 - Phase 0/1/2/3, lguFatigueRuleSync, typologyRule, queryDef, Console Execute
 - ACC 오류 로그 해석, 패턴 검증, 사전 실패 예측
 
-## Parent agent 동작
+## Parent agent 동작 (메인 에이전트 금지 사항)
+
+**메인 에이전트가 ACC에 대해 직접 추측·진단·수정안을 먼저 출력하는 것 금지.**
+SQL 예시, thresholdLink 해석, Prepare 실패 원인은 **Agent 1+2 완료 후** Pipeline Result로만 전달.
 
 1. `.cursor/skills/acc-pipeline-orchestrator/SKILL.md` 및 `acc-patterns.md` 읽기
-2. **Task subagent**로 Agent 1(Reference Validator) + Agent 2(White-box Tester) **병렬** 실행
+2. **즉시** Task subagent로 Agent 1(Reference Validator) + Agent 2(White-box Tester) **병렬** 실행
    - **Agent 1 생략 금지** — dual-algorithm (index lookup → discovery) + `acc-reference-index.md` 갱신
+   - 사용자 로그·Export XML 붙어 있으면 Task prompt에 **전문** 포함
 3. Agent 1 **Index delta 검수** (공식 URL·요약 적절성)
 4. BLOCKER/P1–P2 시 Agent 3(Fix Implementer) → Agent 1+2 재검증 (max 3 iterations)
 5. 사용자에게 **ACC Pipeline Result** 형식으로만 최종 제공 (Reference index review 섹션 포함)
+6. Console Execute / Prepare PASS는 사용자 journal로 확인 — orchestrator는 **Expected** 단계만 명시
+
+## LGU Rank A — thresholdLink (Agent 1+2가 검증·명시)
+
+| 항목 | 올바른 값 | 잘못된 값 (XTK-170036 trailing AND 유발) |
+|------|-----------|------------------------------------------|
+| `businessRanking/@thresholdLink` | recipient **link 이름**만: `LGU_CUSTOMER_MAPPING` | `@CUST_ID`, `@CUST_ID_T`, `LGU_CUSTOMER_MAPPING/@CUST_ID_T` |
+| OOTB UI | Count link = `useLink11Path` → link element 선택 | attribute·link 하위 필드 drill-down |
+| join | `recipient @CUST_ID_T` ↔ `LGU_CUSTOMER_MAPPING @CUST_ID_T` | EXCEPTION_CUST link |
+| 데이터 | ETL/WF/운영 배치 → `LGU_CUSTOMER_MAPPING` + recipient `@CUST_ID_T` | raw SQL · Repo Test seed JS (삭제됨 §04_Console_JS_Cleanup 4-6) |
 
 ## Agent 1 dual-algorithm (orchestrator가 Task prompt에 명시)
 

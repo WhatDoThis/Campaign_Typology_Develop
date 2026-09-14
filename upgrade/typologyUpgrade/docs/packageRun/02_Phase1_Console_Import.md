@@ -8,10 +8,11 @@ Administration > Configuration > Data schemas
 
 | 순서 | 파일 | schema |
 |------|------|--------|
-| 1 | `upgrade/schema/LGU_TARGET_TYPE_M.xml` | `lgu:LGU_TARGET_TYPE_M` |
-| 2 | `upgrade/schema/LGU_TARGET_TYPE_FATIGUE_M.xml` | `lgu:LGU_TARGET_TYPE_FATIGUE_M` |
-| 3 | `upgrade/schema/delivery_uplus.xml` | `uplus:delivery` |
-| 4 | `upgrade/schema/delivery_lgu.xml` | `lgu:delivery` |
+| 1 | `typologyUpgrade/schema/LGU_TARGET_TYPE_M.xml` | `lgu:LGU_TARGET_TYPE_M` |
+| 2 | `typologyUpgrade/schema/LGU_TARGET_TYPE_FATIGUE_M.xml` | `lgu:LGU_TARGET_TYPE_FATIGUE_M` |
+| 3 | `shared/schema/delivery_uplus.xml` | `uplus:delivery` |
+| 4 | `shared/schema/delivery_lgu.xml` | `lgu:delivery` |
+| 5 | `typologyUpgrade/schema/typologyRule.xml` | `lgu:typologyRule` |
 
 각 Import → Save → **Tools > Advanced > Update database structure**
 
@@ -44,7 +45,7 @@ Stage `LGU_TARGET_TYPE_M` — 유형 NO **2** 등 실데이터 확인.
 | # | 작업 |
 |---|------|
 | 1 | `nms:delivery` — ibank hook **없음** (default). 잔존 hook·xpaths 제거 |
-| 2 | `form/deliveryCustomMMS.xml` Import → MMS channel form 연결 |
+| 2 | `typologySetup/form/deliveryCustomMMS.xml` Import → MMS channel form 연결 |
 | 3 | MMS Save → `@LGU_TARGET_TYPE_M_NO` · `@TYPE_DETAIL` 확인 |
 
 ---

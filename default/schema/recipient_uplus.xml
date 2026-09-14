@@ -1,0 +1,69 @@
+<srcSchema _cs="Recipients (uplus)" created="2026-06-22 04:07:07.357Z" createdBy-id="0"
+           desc="Recipient table (profiles" entitySchema="xtk:srcSchema" extendedSchema="nms:recipient"
+           img="nms:recipient.png" label="Recipients" labelSingular="Recipient" lastModified="2026-06-22 04:59:30.160Z"
+           mappingType="sql" md5="490B12320AD3918D96A8247D1AA85EA3" modifiedBy-id="0"
+           name="recipient" namespace="uplus" xtkschema="xtk:srcSchema">
+  <createdBy _cs="양성호 (shyang)"/>
+  <modifiedBy _cs="양성호 (shyang)"/>
+  <element name="recipient">
+  
+    <!-- Init Setting S -->
+    <attribute name="account" visibleIf="$(login)='admin'"/>
+    <attribute name="origin" visibleIf="$(login)='admin'"/>
+    <attribute name="blackList" visibleIf="$(login)='admin'"/>
+    <attribute name="blackListEmail" visibleIf="$(login)='admin'"/>
+    <attribute name="blackListPhone" visibleIf="$(login)='admin'"/>
+    <attribute name="blackListFax" visibleIf="$(login)='admin'"/>
+    <attribute name="blackListMobile" visibleIf="$(login)='admin'"/>
+    <attribute name="blackListPostalMail" visibleIf="$(login)='admin'"/>
+    <attribute name="lastName" visibleIf="$(login)='admin'"/>
+    <attribute name="firstName" visibleIf="$(login)='admin'"/>
+    <attribute name="middleName" visibleIf="$(login)='admin'"/>
+    <attribute name="salutation" visibleIf="$(login)='admin'"/>
+    <attribute name="gender" visibleIf="$(login)='admin'"/>
+    <attribute name="birthDate" visibleIf="$(login)='admin'"/>
+    <attribute expr="YearsOld([@birthDate])" name="age" visibleIf="$(login)='admin'"/>
+    <attribute name="language" visibleIf="$(login)='admin'"/>
+    <attribute name="company" visibleIf="$(login)='admin'"/>
+    <attribute name="email" visibleIf="$(login)='admin'"/>
+    <attribute expr="GetEmailDomain([@email])" name="domain" visibleIf="$(login)='admin'"/>
+    <attribute name="emailFormat" visibleIf="$(login)='admin'"/>
+    <attribute name="mobilePhone" visibleIf="$(login)='admin'"/>
+    <attribute name="phone" visibleIf="$(login)='admin'"/>
+    <attribute name="fax" visibleIf="$(login)='admin'"/>
+    <attribute name="cryptedId" visibleIf="$(login)='admin'"/>
+    <attribute name="status" visibleIf="$(login)='admin'"/>
+    <attribute default="GetDate()" label="생성일" name="created"/>
+    <attribute label="수정일" name="lastModified"/>
+    <element name="country" visibleIf="$(login)='admin'"/>
+    <element name="location" visibleIf="$(login)='admin'"/>
+    <element name="postalAddress" visibleIf="$(login)='admin'"/>
+    <element name="folder" visibleIf="$(login)='admin'"/>
+    <element name="stateLink" visibleIf="$(login)='admin'"/>
+    <!-- Init Setting E -->
+
+
+    <attribute label="고객번호" length="22" name="CUST_ID" sqlname="CUST_ID" type="string"/>
+    <attribute label="고객번호 TEST" length="22" name="CUST_ID_T" sqlname="CUST_ID_T" type="string"/>
+    <attribute label="가입번호" length="22" name="ENTR_ID" sqlname="ENTR_ID" type="string"/>
+
+    <element desc="[LGU] Pressure linked dimension — 고객번호(CUST_ID_T) 기준 집계"
+             label="[LGU] 고객번호 매핑" name="LGU_CUSTOMER_MAPPING" revLink="recipient"
+             target="lgu:LGU_CUSTOMER_MAPPING" type="link">
+      <join xpath-dst="@CUST_ID_T" xpath-src="@CUST_ID_T"/>
+    </element>
+
+
+
+
+
+    <element desc="[제외기준] 고객번호 기준" label="[제외기준] 고객번호 기준" name="EXCEPTION_CUST" revLink="recipient"
+             target="uplus:EXCEPTION_CUST" type="link">
+      <join xpath-dst="@CUST_ID" xpath-src="@CUST_ID"/>
+    </element>
+    <element desc="[제외기준] 가입번호 기준" label="[제외기준] 가입번호 기준" name="EXCEPTION_ENTR" revLink="recipient"
+             target="uplus:EXCEPTION_ENTR" type="link">
+      <join xpath-dst="@ENTR_ID" xpath-src="@ENTR_ID"/>
+    </element>
+  </element>
+</srcSchema>

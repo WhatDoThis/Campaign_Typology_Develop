@@ -54,22 +54,23 @@ OOTB Recurring clone 은 아래를 **복사하지 않음**:
 
 ### Import (JS codes)
 
-> **Console Internal name:** 파일명과 동일하게 **`.js` 포함** (예: `lguEnsureDeliveryScheduling.js`).  
+> **Console Internal name:** 파일명과 동일하게 **`.js` 포함** (예: `lguTypologyPressureAdapter.js`).  
 > `loadLibrary("lgu:…")` 도 동일한 이름 사용.
 
 | Internal name (Console) | Repo file | STG / PRD | Test |
 |----------------------|-----------|:---------:|:----:|
-| `lguEnsureDeliveryScheduling.js` | `typologyUpgrade/js/lguEnsureDeliveryScheduling.js` | ✅ | ✅ |
-| `lguTestEnsureDeliverySenderFromModel.js` | `typologyUpgrade/js/lguTestEnsureDeliverySenderFromModel.js` | ❌ | ✅ |
+| `lguTypologyPressureAdapter.js` | `typologySetup/js/lguTypologyPressureAdapter.js` | ✅ | ✅ |
 
-채널 추가: `lguDeliveryPrepareLib.CHANNEL_MESSAGE_TYPES` 에 `@messageType` byte append.
+> Test `lguTest*` JS — Console **삭제 완료**. Repo: `typologySetup/js/_archive/test/` ([04_Console_JS_Cleanup.md](../../../typologySetup/docs/04_Console_JS_Cleanup.md))
+
+채널 추가: `lguTypologyPressureAdapterLib.CHANNEL_MESSAGE_TYPES` 에 `@messageType` byte append.
 
 ### Typology rule — STG / PRD
 
 | 필드 | 값 |
 |------|-----|
-| Label | `[LGU] Ensure delivery prepare` |
-| Internal name | `RLCtrlEnsureScheduling` |
+| Label | `[LGU] Typology Pressure Adapter` |
+| Internal name | `RLCtrlTypologyPressureAdapter` |
 | Rule type | **Control** |
 | Channel | 대상 채널 (예: `[LGU] SMS/MMS` 101) — **채널별 rule 권장** |
 | Phase | **At the start of targeting** |
@@ -78,82 +79,31 @@ OOTB Recurring clone 은 아래를 **복사하지 않음**:
 **Code** 탭:
 
 ```javascript
-loadLibrary("lgu:lguEnsureDeliveryScheduling.js");
-ensureDeliveryPrepareForTypology(delivery);
+loadLibrary("lgu:lguTypologyPressureAdapter.js");
+applyTypologyPressureAdapter(delivery);
 return true;
 ```
 
-> `ensureDeliverySchedulingForTypology` — 하위 호환 alias.
+### ~~Typology rule — Test only~~ (Console 삭제 완료)
 
-### Typology rule — Test only (SENDER 부록)
-
-STG/PRD Control rule 에 **link 하지 않음**. Test Typology 에만 추가 rule.
-
-| 필드 | 값 |
-|------|-----|
-| Internal name | `RLCtrlEnsureSender_TEST` |
-| Execution order | **0** (RLCtrlEnsureScheduling 보다 앞) |
-
-**Code** 탭 (load 순서: TEST → 공통):
-
-```javascript
-loadLibrary("lgu:lguTestEnsureDeliverySenderFromModel.js");
-loadLibrary("lgu:lguEnsureDeliveryScheduling.js");
-ensureDeliverySenderFromModelForTypology(delivery);
-ensureDeliveryPrepareForTypology(delivery);
-return true;
-```
-
-> Control rule 은 **반드시 `return true`** — lib entry 가 `true` 를 반환해도 rule Code 마지막에 explicit `return true` 권장.  
-> SSOT template: `SSOT_TEMPLATE_INTERNAL_NAME: "DM473"` (47293) — duplicate `deliveryCode` 시 47590 등 실험 template 오선택 방지.
-
-### Typology rule — Test only (PrepareMessage, postTarget)
-
-Campaign WF 가 **PrepareTarget 만** 실행할 때 broadLog 0 으로 멈추는 경우.  
-**STG/PRD 에 배포하지 않음** — STG OOTB 가 full Prepare 시 PrepareMessage 중복 위험.
-
-| 필드 | 값 |
-|------|-----|
-| Label | `[LGU TEST] Ensure PrepareMessage` |
-| Internal name | `RLCtrlEnsurePrepareMessage_TEST` |
-| Rule type | **Control** |
-| Channel | 대상 채널 (101) |
-| Phase | **At the end of targeting** |
-| Execution order | **99** (Pressure rules 뒤) |
-
-**Code** 탭:
-
-```javascript
-loadLibrary("lgu:lguEnsureDeliveryScheduling.js");
-ensureDeliveryPrepareMessageForTypology(delivery);
-return true;
-```
-
-> WF JavaScript activity (`vars.deliveryId`) **사용하지 않음** — delivery 컴포넌트 loading 중 다음 activity 로 넘어가지 않음.
+> `RLCtrlEnsureSender_TEST`, content mirror rule, `RLEnsurePrepareMsg` — Console **삭제 완료** (2026-09-10).  
+> 이력·코드: [04_Console_JS_Cleanup.md](../../../typologySetup/docs/04_Console_JS_Cleanup.md) §4-4
 
 ### 동작 (공통 lib)
 
 | 대상 | 조건 | 동작 |
 |------|------|------|
 | WF component | `CHANNEL_MESSAGE_TYPES` 포함, `workflow-id` 또는 `operation-id` > 0 | Context 생성 |
-| Target | `deliveryTarget/@nonEmpty=false`, model 에 target 있음 | model `targets` 복사 |
-| Scheduling | expr 비어 있음 | Write GetDate()+Seoul |
+| Scheduling | contactDate / extraction 비어 있음 | live+DB materialize (Pressure arbitration) |
+| extractionExpr / contactDateExpr / content | — | **건드리지 않음** |
 | SSOT template | component 아님 | **skip** |
 | 이미 값 있음 | — | **skip** |
 
-### 동작 (TEST SENDER 부록)
-
-| 대상 | 조건 | 동작 |
-|------|------|------|
-| SENDER | `SENDER` 비어 있음, model 에 SENDER 있음 | model SENDER 복사 |
-| STG/PRD | — | **rule 미배포** (수동 SENDER 덮어쓰기 방지) |
-
-**전제:** SSOT template — Target Query + scheduling(또는 expr blank). **SENDER/MSG** 는 component UI select·입력 후 Save (template 비어 있어도 됨).
+**전제:** SSOT template — Target Query + scheduling(또는 expr blank). **SENDER/MSG** 는 component UI select·입력 후 Save.
 
 | 체크 | Test | Stage |
 |------|:----:|:-----:|
-| 공통 rule + Typology link | ☐ | ☐ |
-| TEST SENDER rule (Test only) | ☐ | ☐ |
+| `RLCtrlTypologyPressureAdapter` + Typology link | ☐ | ☐ |
 | clone → Prepare → Pressure | ☐ | ☐ |
 
 ---

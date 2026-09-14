@@ -9,8 +9,9 @@
 |-------|---------|---------------------------|
 | Write insert/delete attrs | `typology-id`, **`rule-id`** | `typologyRule-id` → `iRuleId=0`, duplicate key |
 | DB columns | `iTypologyId`, `iRuleId` | — |
-| Link verify (queryDef) | `nms:typologyRule` count/get: `[typologies/typology/@id]` | `condition sql=` (Managed Cloud **XTK-170016** 금지) |
-| | | `@typology-id` in select expr |
+| Link verify (queryDef) | `nms:typologyRule` count: `[typologies/typology/@id]` + `@id=ruleId` | `condition sql=` (Managed Cloud **XTK-170016** 금지) |
+| queryDef expr | **Write만** `typology-id` / `rule-id` | **`@typology-id` in queryDef** → parser `@typology`−`id` → **XTK-170036** |
+| | | `[@rule-id]` on typologyRuleRel select |
 | | | typologyRuleRel xpath guess |
 
 ## nms:typologyRule (typologies collection)
@@ -19,7 +20,8 @@
 |-------|---------|-------|
 | InputForm | `xpath="typologies"`, link `typology` | — |
 | count WHERE | `[typologies/typology/@id]=typoId` + `@id=ruleId` | `[typologies/@typology-id]` may parse but return 0 |
-| get select | `typologies` → `typology/@id` only | `@typology-id` in node expr |
+| get select | `typologies` → `typology/@id` only (link verify fallback) | `@typology-id` in node expr |
+| **list linked typo ids** | `nms:typology` TYLgu% select `@id` + each `typologyRule` count `[typologies/typology/@id]` | typologyRuleRel queryDef · `@typology-id` · `typology/@id` get |
 
 ## nms:typology
 
@@ -29,7 +31,44 @@
 
 - `@forceOnPrepareMessage` (not `@forceOnPrepare`)
 - `@validity=0` for Frequency 0
-- `businessRanking/@periodRanking`, `@activeForecast`, `<weightFormula>`
+- `businessRanking/@periodRanking` — schema **timespan = seconds (double)** on Write; UI displays suffix units
+- `@activeForecast`, `<weightFormula>`
+
+### ACC timespan — UI suffix vs Write (periodRanking, validity, …)
+
+| UI suffix | Unit | Seconds |
+|-----------|------|---------|
+| `s` | 초 | 1 |
+| `m` | 분 | 60 |
+| `h` | 시 | 3,600 |
+| `d` | 일 | 86,400 |
+| `w` | 주 | 604,800 |
+
+| periodDays | UI equivalent | Write `periodRanking` |
+|------------|---------------|------------------------|
+| 7 | `7d` | `604800` |
+| 1 | `1d` | `86400` |
+| 14 | `14d` | `1209600` |
+
+Write with `"7d"` string → Pressure tab **BAS-010042** (not valid double). Use `periodDays × 86400`.
+
+### nms:typologyRule — contextFilter / deliveryFilter (UI conditionlist)
+
+| Layer | Correct | Wrong (UI symptom) |
+|-------|---------|-------------------|
+| condition | `bool-operator="AND"` + **full** `expr="@LGU_TARGET_TYPE_M_NO = 32"` | `expr="@field" operator="=" value="32"` only → Operator/Value **empty** in UI |
+| humanCond | `Query: 유형마스터번호 equal to 32` | missing → query summary blank |
+| contextFilter | `contextType="2"` (Delivery) + where + humanCond | `contextType` All / filter missing |
+| deliveryFilter | same where + humanCond under `businessRanking` | Application only, no Limit deliveries |
+
+## nms:typologyRule — folder link (queryDef vs Write)
+
+| Layer | Correct | Wrong (observed failure) |
+|-------|---------|---------------------------|
+| queryDef **select** node | `[folder/@id]` alias `@folder-id` | `@folder-id` in node expr → **XTK-170036** Attribute 'folder' unknown |
+| queryDef **where** | `[folder/@id]!=0` or `[@folder-id]!=0` | `@folder-id` in node expr only (where OK per delivery.xml) |
+| xtk.session.Write | `folder-id={id}` on `<typologyRule/>` | — |
+| form xpath | `[@folder-id]` | — |
 
 ## ACC E4X queryDef
 
@@ -58,12 +97,30 @@ var cond = "@name='" + name + "'";  // variable only
 | Tag | Supported | Reference |
 |-----|-----------|-----------|
 | `<enter>` / `<leave>` | ✅ | Adobe docs; validation·context prep |
+| `<preSave>` | ❌ | **XSV** `Element 'preSave' unknown (xtk:form)` — factory 예시 없음 |
 | `<postSave>` | ✅ | Factory `campaign/default/inputForm/delivery.xml:6618-6651` — **persist 후** side effect |
-| `<postDelete>` | ❌ | Factory 예시 없음 — schema SOAP `DeleteWithRuleSync` 사용 |
+| `<preDelete>` | ❌ | **XSV** — factory 예시 없음 |
+| `<postDelete>` | ❌ | Factory 예시 없음 |
 
-Save sync: `<postSave>` + `syncCapFromForm(@id)`.
+Save: `<leave>` schema SOAP `ValidateBeforeSave` (duplicate) → persist → `<postSave>` SyncFromForm.
 
-Delete: Explorer 표준 Delete(cap만). Rule+ cap 동시 삭제는 schema SOAP `DeleteWithRuleSync` — form UI 버튼 없음(운영 혼란 방지).
+Delete (Explorer): navtree `<command>` + `hiddenCommands="adbdelete"` → `DeleteWithRuleSync`.  
+Form 버튼 `DeleteWithRuleSync` = Rule+fatigue 삭제 (폼 닫힘). `PreDeleteRuleSync`는 navtree/command·DeleteWithRuleSync 내부에서 호출.
+
+### lgu:LGU_TARGET_TYPE_FATIGUE_M — form soapCall param types (Console-verified)
+
+> **Entity attribute `type="long"` ≠ SOAP `<param type>`**. form param은 **schema `<method>` signature** 와 일치.  
+> log #67·#77: `long`/`int` mismatch → `The 'long' type … does not match … ('int')`.  
+> **신규 soapCall 추가 시 log #67·#76·#77 grep 필수** — `docs/log/log.md`만으로는 재발 방지 안 됨.
+
+| soapCall | param | form `<param type>` | schema method param |
+|----------|-------|---------------------|---------------------|
+| ValidateBeforeSave | messageType | `byte` | `byte` |
+| ValidateBeforeSave | @LGU_TARGET_TYPE_M_NO | **`int`** (not long) | **`int`** |
+| ValidateBeforeSave | @id | `int` | `int` |
+| SyncFromForm / DeleteWithRuleSync | @id | `int` | `int` |
+
+Reference: `default/inputForm/delivery.xml` — `@id` soapCall always `type="int"`.
 
 **readOnlyExpr:** `<form>` / `<container>` only — **not** `<input>`. Pattern: `<container readOnlyExpr="@managedBySync=true"><input xpath="..."/></container>` (`delivery.xml:1699`).
 
@@ -74,11 +131,11 @@ Delete: Explorer 표준 Delete(cap만). Rule+ cap 동시 삭제는 schema SOAP `
 | `@hasDeliveryContent` expr | include `EV(@messageType,'lguMMS') and [content/lguMMS/source/MSG]!='' and SENDER` | OOTB only checks html/text/sms or `@messageType > other`(120) — **lguMMS=101 fails** |
 | UI symptom | Content filled → Prepare wizard proceeds | **"The delivery content has not been entered yet"** while MSG/SENDER in DB |
 | Fix (UI) | `default/inputForm/delivery.xml` **4×** hasDeliveryContent `set expr` (Import nms:delivery form) | 미Import 시 `actionMode=2` → PrepareTarget only |
-| Fix (WF/server) | `lguEnsureDeliveryScheduling.js` preTarget: lguMMS MSG → `content/sms/source` mirror | OOTB PrepareMessage reads sms CDATA; nested lguMMS MSG ignored → state 15, broadLog 0 |
-| Diag | `lguTestDeliveryPrepareDiag(id)` — check `smsSource len` | Test Console only |
-| WF PrepareMessage (Test only) | Typology **postTarget** `ensureDeliveryPrepareMessageForTypology(delivery)` — in-memory delivery, **no WF js6** | delivery component loading → `vars.deliveryId` unavailable; STG rule **미배포** |
-| Console PrepareMessage test | `lguTestRunDeliveryPrepareMessage(id)` — queryDef get, **no** `nms.delivery.load(id,true)` | STG Import 불필요 |
-| STG Control rule | preTarget `ensureDeliveryPrepareForTypology` only | scheduling + content mirror; no postTarget PrepareMessage |
+| Fix (WF/server) | `lguTypologyPressureAdapter.js` preTarget: **contactDate + extraction materialize** (live+DB) | Pressure arbitration; extractionExpr alone **무효** |
+| Diag | Delivery journal + Export typologyRule XML | Test `lguTest*` JS **Repo 삭제** (2026-09-14) — `04_Console_JS_Cleanup.md` §4-6 |
+| WF PrepareMessage (Test only) | OOTB full Prepare on STG; Test WF often PrepareTarget-only | typology postTarget `PrepareMessageImpl` → **wkDlv corruption** |
+| Console PrepareMessage | typology **외부** only if needed | **no** typology rule; **no** `load(id,true)` |
+| STG Control rule | preTarget `applyTypologyPressureAdapter` only | contactDate materialize; no content; no postTarget PrepareMessage |
 
 ## nms:delivery — SSOT template resolve (schema export verified)
 
@@ -94,7 +151,7 @@ Delete: Explorer 표준 Delete(cap만). Rule+ cap 동시 삭제는 schema SOAP `
 | delivery properties | `[properties/@toDeliver]` (label "Messages to send") | `[properties/@toSend]` → **XTK-170036** Attribute 'toSend' unknown |
 | getIfExists nms:delivery | `var row = q.ExecuteQuery(); row.@id` | `res.delivery.@id` → **빈 필드** (래퍼 없음) |
 | lib auto-exec | WF: `loadLibrary` + `diagFn(id)` only | lib bottom `diagFn(id)` + WF call → **로그 2회** |
-| Prepare scheduling | preTarget: **live** `delivery.scheduling.contactDate=getCurrentDate()` + DB `formatDate` Write | DB만 Write → Pressure **No contact date**; raw Date Write → TIM-030009 |
+| Prepare scheduling | preTarget: **contactDate + extraction materialize** (live + DB) | extractionExpr alone **무효** for Pressure |
 | Prepare lib scope | scheduling expr/date only — **no** template target/SENDER copy | SSOT template = layout shell; WF target + UI Save |
 | lguMMS SENDER/MSG | **delivery component** UI select + MSG 입력 후 **Save** | template 복사 전제 → 운영 흐름과 불일치 |
 | TEST SENDER fallback | delivery SENDER blank + model 에 값 있을 때만 | template 필수 가정 금지 |
@@ -105,7 +162,7 @@ Delete: Explorer 표준 Delete(cap만). Rule+ cap 동시 삭제는 schema SOAP `
 | Layer | Correct | Wrong (observed failure) |
 |-------|---------|---------------------------|
 | `delivery.@id` | **top-level function** or `prototype.method` | `{ resolve: function(d) { return d.@id; } }` object literal → **JST-310000 invalid XML name** |
-| lib pattern | config object + `lguPrepareResolveDeliveryId()` standalone | methods with `.@` inside `var lib = { fn: function(){} }` |
+| lib pattern | config object + `lguPressureAdapterResolveDeliveryId()` standalone | methods with `.@` inside `var lib = { fn: function(){} }` |
 | WF/Console diag script | `queryDef` + `del.properties.@toDeliver` (select `[properties/@toDeliver]`) | `nms.delivery.load` + `d.properties.toDeliver` → **JST-310000 invalid XML name** |
 | broadLog iterate | `res.broadLogRcp.@address` or `for each (var bl in res.broadLogRcp)` | `rows[i]` array index → **bl is undefined** |
 
@@ -113,8 +170,8 @@ Delete: Explorer 표준 Delete(cap만). Rule+ cap 동시 삭제는 schema SOAP `
 
 | Layer | Correct | Wrong |
 |-------|---------|-------|
-| Internal name | **`lguEnsureDeliveryScheduling.js`** (`.js` 포함) | `lguEnsureDeliveryScheduling` → `JST-310003` load 실패 |
-| loadLibrary | `loadLibrary("lgu:lguEnsureDeliveryScheduling.js")` | `.js` 생략 시 환경별 load 실패 |
+| Internal name | **`lguTypologyPressureAdapter.js`** (`.js` 포함) | `lguTypologyPressureAdapter` → `JST-310003` load 실패 |
+| loadLibrary | `loadLibrary("lgu:lguTypologyPressureAdapter.js")` | `.js` 생략 시 환경별 load 실패 |
 
 ## ACC JavaScript codes — line endings (Console-verified)
 
@@ -123,6 +180,6 @@ Delete: Explorer 표준 Delete(cap만). Rule+ cap 동시 삭제는 schema SOAP `
 | Line ending | **LF only** (`\n`) | CRLF → Import/eval quirks |
 | Blank lines | Paragraph breaks only (1 blank max between functions) | **Blank line after every line** → `SCR-160012` |
 | Docstring | Contiguous `/** ... */` block | Empty lines inside docstring block |
-| Line count sanity | ~250 lines for `lguEnsureDeliveryScheduling.js` | ~500+ lines = per-line blank artifact |
+| Line count sanity | ~300 lines for `lguTypologyPressureAdapter.js` | ~500+ lines = per-line blank artifact |
 
 **Agent 1 + Agent 2 must run R13 / dimension F before PASS.**

@@ -1,0 +1,228 @@
+<srcSchema desc="Recipient table (profiles" entitySchema="xtk:srcSchema" genAccessors="false"
+           img="nms:recipient.png" label="Recipients" labelSingular="Recipient" md5="A021AA3AA332794E91E6F099A647FFE1"
+           name="recipient" namespace="nms" xtkschema="xtk:srcSchema">
+  <enumeration basetype="byte" name="gender">
+    <value label="None specified" name="unknown" value="0"/>
+    <value label="Male" name="male" value="1"/>
+    <value label="Female" name="female" value="2"/>
+  </enumeration>
+  <enumeration basetype="byte" name="status">
+    <value label="Prospect" name="prospect" value="0"/>
+    <value label="Client" name="customer" value="1"/>
+  </enumeration>
+  <enumeration basetype="byte" name="messageFormat">
+    <value label="Unknown" name="unknown" value="0"/>
+    <value label="Text" name="text" value="1"/>
+    <value label="HTML" name="html" value="2"/>
+    <value desc="Edits the mail encoding to become a Deco-mail for Japanese provider DoCoMo"
+           label="Deco-mail (DoCoMo)" name="deco" value="3"/>
+    <value desc="Edits the mail encoding to become a Deco-mail for the Japanese provider KDDI AU"
+           label="Decoration Mail (KDDI AU)" name="kddi" value="4"/>
+    <value desc="Edits the mail encoding to become a Deco-mail for Japanese provider Softbank"
+           label="Decore Mail (Softbank)" name="soft" value="5"/>
+  </enumeration>
+  <element autopk="true" filterPath="@email" folderModel="nmsRecipient" img="nms:recipient.png"
+           name="recipient" pkSequence="NmsRecipientId" pkgStatus="never">
+    <compute-string expr="@lastName + ' ' + @firstName +' (' + @email + ')' "/>
+
+    <!-- Do not use the name lastName, account, email, mobilePhone, lastModified, origin
+         to define a recipient index, they were used on older instance before NEO-8228.
+         This is a work-around as changing the path of an index will not update its db definition
+         if its name stays the same...
+    -->
+    <dbindex name="email2">
+      <keyfield xpath="@email"/>
+    </dbindex>
+    <dbindex name="lastName2">
+      <keyfield xpath="@lastName"/>
+    </dbindex>
+    <dbindex name="firstName">
+      <keyfield xpath="@firstName"/>
+    </dbindex>
+    <dbindex name="account2">
+      <keyfield xpath="@account"/>
+    </dbindex>
+    <dbindex name="mobilePhone2">
+      <keyfield xpath="@mobilePhone"/>
+    </dbindex>
+    <dbindex name="lastModified2">
+      <keyfield xpath="@lastModified"/>
+    </dbindex>
+    <dbindex name="origin2">
+      <keyfield xpath="@origin"/>
+    </dbindex>
+    <dbindex indexOption="searchFromStart" name="email3">
+      <keyfield xpath="@email"/>
+    </dbindex>
+    <dbindex indexOption="searchFromStart" name="lastName3">
+      <keyfield xpath="@lastName"/>
+    </dbindex>
+    <dbindex indexOption="searchFromStart" name="firstName3">
+      <keyfield xpath="@firstName"/>
+    </dbindex>
+
+    <attribute default="GetDate()" label="Creation date" name="created" type="datetime"/>
+    <attribute label="Modification date" name="lastModified" type="datetime"/>
+
+    <attribute label="Account #" length="30" name="account" type="string"/>
+    <attribute desc="Origin of address (broker...)" label="Origin" length="80" name="origin"
+               type="string" userEnum="origin"/>
+    <!-- should be one per address type, and three state -->
+    <attribute label="No longer contact (by any channel)" name="blackList" type="boolean"/>
+    <attribute label="No longer contact by email" name="blackListEmail" type="boolean"/>
+    <attribute label="No longer contact by phone" name="blackListPhone" type="boolean"/>
+    <attribute label="No longer contact by fax" name="blackListFax" type="boolean"/>
+    <attribute label="No longer contact by SMS/MMS" name="blackListMobile" type="boolean"/>
+    <attribute label="No longer contact by direct mail" name="blackListPostalMail"
+               type="boolean"/>
+
+    <attribute dataPolicy="smartCase" desc="Recipient last name" label="Last name"
+               length="50" name="lastName" type="string"/>
+    <attribute dataPolicy="smartCase" desc="Recipient first name" label="First name"
+               length="30" name="firstName" type="string"/>
+    <attribute dataPolicy="smartCase" desc="Middle name of recipient" label="Middle name"
+               length="30" name="middleName" type="string"/>
+    <attribute desc="Recipient title" label="Title" length="20" name="salutation"
+               type="string" userEnum="salutation"/>
+    <attribute desc="Recipient sex" enum="nms:recipient:gender" label="Gender" name="gender"
+               type="byte"/>
+    <attribute label="Date of birth" name="birthDate" type="date"/>
+    <attribute desc="Age in years" expr="YearsOld([@birthDate])" label="Age" name="age"
+               notNull="false" type="long"/>
+
+    <attribute desc="Preferred language of the recipient" label="Language" length="32"
+               name="language" type="string" userEnum="language"/>
+    <attribute desc="Company name of recipient" label="Company" length="80" name="company"
+               type="string" userEnum="company"/>
+
+    <attribute name="email" template="xtk:common:email"/>
+    <attribute desc="Domain part of the email" expr="GetEmailDomain([@email])" label="Email domain"
+               name="domain"/>
+
+    <attribute default="0" desc="Email format type" enum="nms:recipient:messageFormat"
+               label="Email format" name="emailFormat" type="byte"/>
+
+    <attribute name="mobilePhone" template="xtk:common:mobilePhone"/>
+
+    <attribute name="phone" template="nms:common:phone"/>
+    <attribute name="fax" template="nms:common:fax"/>
+
+    <!-- pURLs -->
+    <attribute advanced="true" applicableIf="HasPackage('nms:purl')" desc="Calculated field dedicated to generating the guest ID."
+               expr="@lastName+@firstName" label="Guest ID personalization" length="128"
+               name="guestIdExpr" type="string"/>
+    <attribute advanced="true" applicableIf="HasPackage('nms:purl')" desc="Calculated field dedicated to generating the guest code."
+               expr="@lastName+@firstName" label="Guest code personalization" length="128"
+               name="guestCodeExpr" type="string"/>
+
+    <attribute desc="Encrypted identifier to be used for web applications." expr="AESEncrypt(@id)"
+               label="Encrypted identifier" name="cryptedId" type="string" xml="true"/>
+
+    <!-- materials to compute the postal address -->
+    <element aggregate="nms:common:locationAggregate" name="location"/>
+    <element externalJoin="true" label="Country/Region" name="country" revIntegrity="normal"
+             revLink="recipient" target="nms:country" type="link">
+      <join xpath-dst="@isoA2" xpath-src="location/@countryCode"/>
+    </element>
+    <element desc="State/Province" externalJoin="true" label="State" name="stateLink"
+             revLink="recipient" target="nms:state" type="link">
+      <join xpath-dst="@code" xpath-src="location/@stateCode"/>
+      <join xpath-dst="@countryCode" xpath-src="location/@countryCode"/>
+    </element>
+
+    <!-- normalized postal address -->
+    <element name="postalAddress" template="nms:common:postalAddress">
+      <attribute expr="SubString(JuxtWords3(Smart([../@salutation]), Smart([../@firstName]), Upper([../@lastName])), 1, 38)"
+                 name="line1"/>
+      <attribute applicableIf="GetOption('NmsRecipient_UseOldAddr')!=1" expr="Upper(SubString([../location/@address1], 1,38))"
+                 name="line2"/>
+      <attribute applicableIf="GetOption('NmsRecipient_UseOldAddr')!=1" expr="Upper(SubString([../location/@address2], 1,38))"
+                 name="line3"/>
+      <attribute applicableIf="GetOption('NmsRecipient_UseOldAddr')!=1" expr="Upper(SubString([../location/@address3],        1,38))"
+                 name="line4"/>
+      <attribute applicableIf="GetOption('NmsRecipient_UseOldAddr')!=1" expr="Upper(SubString([../location/@address4],       1,38))"
+                 name="line5"/>
+      <attribute applicableIf="GetOption('NmsRecipient_UseOldAddr')==1" expr="Upper(SubString([../location/@additionalRcp], 1,38))"
+                 name="line2"/>
+      <attribute applicableIf="GetOption('NmsRecipient_UseOldAddr')==1" expr="Upper(SubString([../location/@additionalGeo], 1,38))"
+                 name="line3"/>
+      <attribute applicableIf="GetOption('NmsRecipient_UseOldAddr')==1" expr="Upper(SubString([../location/@street],        1,38))"
+                 name="line4"/>
+      <attribute applicableIf="GetOption('NmsRecipient_UseOldAddr')==1" expr="Upper(SubString([../location/@special],       1,38))"
+                 name="line5"/>
+      <attribute expr="SubString(JuxtWords([../location/@zipCode], Upper([../location/@city])), 1,38)"
+                 name="line6"/>
+      <attribute _operation="delete" name="line7"/>
+      <element expr="@line1+'\n'+@line2+'\n'+@line3+'\n'+@line4+'\n'+@line5+'\n'+@line6"
+               name="serialized"/>
+      <attribute expr="AllNonNull3([../location/@zipCode], [../location/@city], [../@lastName])"
+                 name="addrDefined"/>
+    </element>
+
+    <element name="comment" template="xtk:common:comment"/>
+    <element aggregate="nms:common:freeFields" name="freeFields"/>
+
+    <attribute enum="nms:recipient:status" label="Status" name="status" type="byte"/>
+
+    <element defOnDuplicate="true" default="DefaultFolder('nmsRecipient', [@_folder-id])"
+             label="Folder" name="folder" revDesc="Recipients included in this folder"
+             revIntegrity="define" revLabel="Recipients" target="xtk:folder" type="link"/>
+
+    <element advanced="true" desc="Information about the email" externalJoin="true"
+             integrity="neutral" label="Info on the email" name="emailInfo" revIntegrity="neutral"
+             revLink="recipient" target="nms:address" type="link">
+      <join xpath-dst="@address" xpath-src="@email"/>
+    </element>
+
+  </element>
+
+  <methods>
+    <method name="RegisterGroup" static="true">
+      <help>Add selected recipients to a list</help>
+      <parameters>
+        <param desc="Lists" name="groupList" type="DOMElement"/>
+        <param desc="Recipient list" name="recipientList" type="DOMElement"/>
+        <param desc="Subscribe/Unsubscribe recipients" name="register" type="boolean"/>
+      </parameters>
+      <example language="javascript">
+        <programlisting>//List
+var entity = &lt;entityList&gt;&lt;key value="24447964"/&gt;
+              &lt;where&gt;
+                &lt;condition enabledIf="" expr="@id = 24447964"/&gt;
+              &lt;/where&gt;
+            &lt;/entityList&gt;
+ 
+//Recipient
+var choice = &lt;choiceList&gt;&lt;key value="18995462"/&gt;
+              &lt;where&gt;
+                &lt;condition enabledIf="" expr="@id = 18995462"/&gt;
+              &lt;/where&gt;
+            &lt;/choiceList&gt;
+nms.recipient.RegisterGroup(entity,choice,true)</programlisting>
+      </example>
+    </method>
+    <method name="RegisterGroup2" static="true">
+      <help>Add selected recipients to a list</help>
+      <parameters>
+        <param desc="Lists" name="groupList" type="DOMElement"/>
+        <param desc="Recipient list" name="recipientList" type="DOMElement"/>
+        <param desc="Recreate list" name="clearGroup" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method name="ClearFolder" static="true">
+      <help>Delete all the recipients from the folder</help>
+      <parameters>
+        <param desc="Folder ID" name="folderId" type="DOMElement"/>
+      </parameters>
+    </method>
+
+    <method name="ClearGroup" static="true">
+      <help>Removes all recipients from the list</help>
+      <parameters>
+        <param desc="List ID" name="groupId" type="DOMElement"/>
+      </parameters>
+    </method>
+  </methods>
+
+</srcSchema>

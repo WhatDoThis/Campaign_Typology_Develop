@@ -2,83 +2,188 @@
 <!--
 lgu.LGU_TARGET_TYPE_FATIGUE_M ([LGU] 타겟유형 피로도 Input form)
 ================================================================
-타겟유형 마스터 NO·유형내용 + cap 설정. Save 시 Pressure Rule 자동 sync.
+타겟유형 마스터 NO·유형 내용 + cap 설정. CRUD 시 Pressure Rule 자동 sync.
 
 [Main Functions]
 ===========
-- LGU_TARGET_TYPE_FATIGUE_M_inputForm: notebook UI
-- syncFatigueFromForm: postSave hook
+- LGU_TARGET_TYPE_FATIGUE_M_inputForm: notebook UI (New · Edit · Delete)
+- leave: ValidateBeforeSave (messageType+NO duplicate — preSave 미지원)
+- postSave: SyncFromForm (xtk:javascript 사용 금지)
+- Explorer Delete: navtree command → DeleteWithRuleSync (preDelete 미지원)
+- Typology 탭: New/Edit 공통 linkListChoice (Save 시 Rule relink)
+- Delete 버튼: schema SOAP DeleteWithRuleSync
 
 [Dependencies]
 =========
-- lgu:LGU_TARGET_TYPE_FATIGUE_M, lgu:LGU_TARGET_TYPE_M
-- lgu:lguFatigueRuleSync
+- lgu:LGU_TARGET_TYPE_M, lgu:LGU_TARGET_TYPE_FATIGUE_M, nms:typology
+- lgu:lguFatigueRuleSync.js
 -->
-<form entity-schema="lgu:LGU_TARGET_TYPE_FATIGUE_M" label="[LGU] 타겟유형 피로도"
-      maxLabelWidth="120" name="LGU_TARGET_TYPE_FATIGUE_M" namespace="lgu"
-      xtkschema="xtk:form">
+<form entitySchema="lgu:LGU_TARGET_TYPE_FATIGUE_M" label="[LGU] 타겟유형 피로도"
+      lastModified="2026-09-11 02:35:00.000Z" maxLabelWidth="130"
+      name="LGU_TARGET_TYPE_FATIGUE_M" namespace="lgu" xtkschema="xtk:form">
+
+  <enter>
+    <if expr="[/ignored/@_isNewEntity]">
+      <set value="101" xpath="@messageType"/>
+      <set value="TYLguSmsMms" xpath="/tmp/@typologyName"/>
+      <set value="TYLguSmsMms" xpath="@typologyInternalName"/>
+      <set value="[LGU] SMS/MMS" xpath="/tmp/@typologyLabel"/>
+      <set expr="1" xpath="@managedBySync"/>
+      <set expr="7" xpath="@periodDays"/>
+      <set expr="1" xpath="@active"/>
+      <set expr="2" xpath="@capCount"/>
+      <set expr="0" xpath="/tmp/@targetPickAll"/>
+    </if>
+    <if expr="![/ignored/@_isNewEntity]">
+      <if expr="@LGU_TARGET_TYPE_M_NO=0">
+        <set expr="1" xpath="/tmp/@targetPickAll"/>
+      </if>
+      <if expr="@LGU_TARGET_TYPE_M_NO!=0">
+        <set expr="0" xpath="/tmp/@targetPickAll"/>
+      </if>
+      <if expr="@typologyInternalName!=''">
+        <set expr="@typologyInternalName" xpath="/tmp/@typologyName"/>
+      </if>
+    </if>
+  </enter>
 
   <container style="flat" type="notebook">
 
     <container label="피로도 설정">
-      <static label="타겟유형·채널별 발송 상한. 저장(Finish) 시 Typology Pressure Rule에 자동 반영됩니다."
-             type="help"/>
-      <container colcount="2">
-        <input colspan="2" label="표시 이름" xpath="@label"/>
-        <input hidden="true" xpath="@LGU_TARGET_TYPE_M_NO"/>
-        <input label="유형내용" readOnly="true" xpath="@TYPE_DETAIL"/>
-        <input colspan="2" label="타겟유형 선택" prebuildSubForm="false" type="subFormLink" xpath=".">
-          <form label="타겟유형" nothingToSave="true" xpath=".">
-            <input choiceButton="true" extraColumns="[.],@NO,@TYPE_DETAIL" monoSelection="true"
-                   schema="lgu:LGU_TARGET_TYPE_M" type="linkListChoice" xpath="."
-                   xpathOut="/ignored/LGU_TARGET_TYPE_M">
-              <input label="유형번호" xpath="@NO"/>
-              <input label="유형내용" xpath="@TYPE_DETAIL"/>
-              <orderBy>
-                <node expr="@NO" sortDesc="false"/>
-              </orderBy>
+      <container padding-bottom="12" padding-left="20" padding-right="20" padding-top="12">
+        <container colcount="2">
+          <input colspan="2" label="표시 이름" xpath="@label"/>
+          <input label="채널" readOnly="true" xpath="@messageType"/>
+          <input label="사용" xpath="@active"/>
+          <input hidden="true" xpath="@LGU_TARGET_TYPE_M_NO"/>
+          <container colspan="2" colcount="2">
+            <input checkedValue="1" label="채널 전체" type="radioButton"
+                   xpath="/tmp/@targetPickAll"/>
+            <input checkedValue="0" label="유형 선택" type="radioButton"
+                   xpath="/tmp/@targetPickAll"/>
+          </container>
+          <container colspan="2" type="visibleGroup" visibleIf="[/tmp/@targetPickAll]=1">
+            <static label="All (채널 전체) — Rule: RLLgu{Channel}All" type="help"/>
+          </container>
+          <container colspan="2" type="visibleGroup" visibleIf="[/tmp/@targetPickAll]=0">
+            <static label="유형 선택 — Rule: RLLgu{Channel}{Type}{No}" type="help"/>
+            <input colspan="2" img="nms:typologyRule.png" label="타겟유형 선택*"
+                   prebuildSubForm="false" type="subFormLink" xpath=".">
+              <form label="타겟유형" nothingToSave="true" xpath=".">
+                <input choiceButton="true" extraColumns="[.],@NO,@TYPE_DETAIL"
+                       img="nms:typologyRule.png" monoSelection="true"
+                       schema="lgu:LGU_TARGET_TYPE_M" type="linkListChoice" xpath="."
+                       xpathOut="/ignored/LGU_TARGET_TYPE_M">
+                  <input label="유형번호" xpath="@NO"/>
+                  <input label="유형 내용" xpath="@TYPE_DETAIL"/>
+                  <orderBy>
+                    <node expr="@NO" sortDesc="false"/>
+                  </orderBy>
+                </input>
+                <leave>
+                  <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@NO]"
+                       xpath="@LGU_TARGET_TYPE_M_NO"/>
+                  <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@TYPE_DETAIL]"
+                       xpath="@TYPE_DETAIL"/>
+                </leave>
+              </form>
             </input>
-            <leave>
-              <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@NO]"
-                   xpath="@LGU_TARGET_TYPE_M_NO"/>
-              <set expr="[/ignored/LGU_TARGET_TYPE_M/LGU_TARGET_TYPE_M/@TYPE_DETAIL]"
-                   xpath="@TYPE_DETAIL"/>
-            </leave>
-          </form>
-        </input>
-        <static colspan="2"
-               label="유형마스터번호 0 = 채널 TOTAL (Pressure Rule filter 없음). 마스터와 스키마 FK 없음."
-               type="help"/>
-        <container readOnlyExpr="@managedBySync=true">
-          <input label="채널" xpath="@messageType"/>
+          </container>
+          <input colspan="2" label="유형 내용" readOnly="true" xpath="@TYPE_DETAIL"/>
+          <container colspan="1">
+            <input label="허용 건수" xpath="@capCount"/>
+            <input label="집계 기간(일)" xpath="@periodDays"/>
+          </container>
+          <container colspan="1">
+            <input label="우선 순위" xpath="@executionOrder"/>
+            <static label="낮을수록 먼저 실행됩니다." type="help"/>
+          </container>
         </container>
-        <input label="사용" xpath="@active"/>
-        <input label="허용 건수" xpath="@capCount"/>
-        <input label="집계 기간(일)" xpath="@periodDays"/>
-        <input label="실행 순서" xpath="@executionOrder"/>
+      </container>
+    </container>
+
+    <container img="nms:typofolder.png" label="Typology">
+      <container padding-bottom="12" padding-left="20" padding-right="20" padding-top="12">
+        <static label="Pressure Rule이 연결될 Typology를 선택하세요. 변경 후 Save하면 Rule 연결 Typology가 갱신됩니다."
+               type="help"/>
+        <input choiceButton="true" extraColumns="[.],@name,@label" img="nms:typofolder.png"
+               monoSelection="true" nolabel="true" schema="nms:typology"
+               setOnClick="true" toolbarCaption="Typologies applying the rule"
+               type="linkListChoice" xpath="." xpathOut="/ignored/typologyPick">
+          <input label="Label" xpath="@label"/>
+          <input label="Internal name" xpath="@name"/>
+          <orderBy>
+            <node expr="@label" sortDesc="false"/>
+          </orderBy>
+          <sysFilter>
+            <condition expr="@name LIKE 'TYLgu%'"/>
+          </sysFilter>
+          <enter>
+            <set expr="[/ignored/typologyPick/typology/@name]" xpath="/tmp/@typologyName"/>
+            <set expr="[/ignored/typologyPick/typology/@label]" xpath="/tmp/@typologyLabel"/>
+          </enter>
+        </input>
+        <container label="선택된 Typology" type="frame" visibleIf="[/tmp/@typologyName]!=''">
+          <input label="Label" readOnly="true" xpath="/tmp/@typologyLabel"/>
+          <input label="Internal name" readOnly="true" xpath="/tmp/@typologyName"/>
+        </container>
+        <static label="목록에서 Typology를 클릭하면 위에 선택 결과가 표시됩니다. Edit 시 Internal name만 보이면 목록에서 다시 클릭하세요."
+               type="help" visibleIf="[/tmp/@typologyName]!='' and [/tmp/@typologyLabel]=''"/>
+        <static label="목록에서 Typology를 클릭하면 위에 선택 결과가 표시됩니다."
+               type="help" visibleIf="[/tmp/@typologyName]=''"/>
       </container>
     </container>
 
     <container label="연동 상태">
-      <static label="migrate·sync가 채우는 필드. Sync 관리 대상이면 Rule/Typology 이름은 읽기 전용."
-             type="help"/>
-      <container colcount="1">
-        <container readOnlyExpr="@managedBySync=true">
-          <input label="Rule 이름" xpath="@ruleInternalName"/>
-          <input label="Typology" xpath="@typologyInternalName"/>
+      <container padding-bottom="12" padding-left="20" padding-right="20" padding-top="12">
+        <container colcount="2">
+          <input label="Rule 이름" readOnly="true" xpath="@ruleInternalName"/>
+          <input label="Typology" readOnly="true" xpath="@typologyInternalName"/>
+          <input label="Sync 관리" readOnly="true" xpath="@managedBySync"/>
+          <input label="마지막 sync" readOnly="true" xpath="@lastSyncAt"/>
+          <input colspan="2" label="sync 결과" lineCount="4" readOnly="true" type="memo"
+                 xpath="@lastSyncStatus"/>
+          <container colspan="2" type="visibleGroup"
+                     visibleIf="![/ignored/@_isNewEntity] and @managedBySync=true">
+            <input label="Rule 연동 삭제" type="button">
+              <enter>
+                <soapCall name="DeleteWithRuleSync" service="lgu:LGU_TARGET_TYPE_FATIGUE_M">
+                  <param exprIn="@id" type="int"/>
+                </soapCall>
+              </enter>
+            </input>
+            <static label="Explorer 목록에서는 Rule 연동 삭제 메뉴를 사용하세요. 폼을 연 상태에서 삭제할 때는 이 버튼을 사용하세요."
+                   type="help"/>
+          </container>
         </container>
-        <input label="Sync 관리" readOnly="true" xpath="@managedBySync"/>
-        <input label="마지막 sync" readOnly="true" xpath="@lastSyncAt"/>
-        <input label="sync 결과" lineCount="3" readOnly="true" type="memo" xpath="@lastSyncStatus"/>
       </container>
     </container>
 
   </container>
 
+  <leave>
+    <if expr="[/tmp/@targetPickAll]=1">
+      <set expr="0" xpath="@LGU_TARGET_TYPE_M_NO"/>
+      <set expr="''" xpath="@TYPE_DETAIL"/>
+    </if>
+    <if expr="[/tmp/@typologyName]!=''">
+      <set expr="[/tmp/@typologyName]" xpath="@typologyInternalName"/>
+    </if>
+    <if expr="[/tmp/@typologyName]=''">
+      <set value="TYLguSmsMms" xpath="@typologyInternalName"/>
+      <set value="TYLguSmsMms" xpath="/tmp/@typologyName"/>
+      <set value="[LGU] SMS/MMS" xpath="/tmp/@typologyLabel"/>
+    </if>
+    <soapCall name="ValidateBeforeSave" service="lgu:LGU_TARGET_TYPE_FATIGUE_M">
+      <param exprIn="@messageType" type="byte"/>
+      <param exprIn="@LGU_TARGET_TYPE_M_NO" type="int"/>
+      <param exprIn="@id" type="int"/>
+    </soapCall>
+  </leave>
+
   <postSave>
-    <soapCall name="Execute" service="xtk:javascript">
-      <param exprIn="'loadLibrary(\'lgu:lguFatigueRuleSync\'); syncFatigueFromForm('+@id+');'"
-             type="string"/>
+    <soapCall name="SyncFromForm" service="lgu:LGU_TARGET_TYPE_FATIGUE_M">
+      <param exprIn="@id" type="int"/>
     </soapCall>
   </postSave>
 

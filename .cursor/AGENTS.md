@@ -34,7 +34,7 @@ Chat에서 예시 (orchestrator가 Agent 1 자동 포함):
 
 ```
 @acc-pipeline-orchestrator
-typologyUpgrade/js/lguEnsureDeliveryScheduling.js 검증.
+upgrade/typologySetup/js/lguTypologyPressureAdapter.js 검증.
 Error: XTK-170036 [@model-id]. Environment: Test ACC v8.
 ```
 

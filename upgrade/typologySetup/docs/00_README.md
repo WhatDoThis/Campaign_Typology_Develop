@@ -11,10 +11,12 @@ OOTB **Pressure Rule** + **Typology** + LGU 타겟유형·피로도 관리.
 | 1 | [01_Console_Setup.md](01_Console_Setup.md) | 스키마 · form · 피로도 UI |
 | 2 | [02_Typology_Rules.md](02_Typology_Rules.md) | Typology + Pressure Rule |
 | 3 | [03_Delivery_Prepare.md](03_Delivery_Prepare.md) | Template · Prepare · 운영 |
+| 4 | [04_Console_JS_Cleanup.md](04_Console_JS_Cleanup.md) | Console JS 삭제 이력 (완료) |
 
-Typology Rule 필드: [05_TypologyRule_FatigueTutorial.md](../../docs/05_TypologyRule_FatigueTutorial.md)
+Typology Rule 필드: [05_TypologyRule_FatigueTutorial.md](../../../docs/05_TypologyRule_FatigueTutorial.md)
 
-**피로도 sync 패키지:** [typologyUpgrade/docs/README.md](../typologyUpgrade/docs/README.md)
+**피로도 sync 패키지:** [typologyUpgrade/docs/README.md](../../typologyUpgrade/docs/README.md)  
+**공통 delivery 스키마:** [shared/README.md](../../shared/README.md)
 
 ---
 
@@ -31,17 +33,14 @@ Typology Rule 필드: [05_TypologyRule_FatigueTutorial.md](../../docs/05_Typolog
 
 ---
 
-## Repo (`upgrade/`)
+## Repo
 
-| 파일 | Console |
-|------|---------|
-| `schema/LGU_TARGET_TYPE_M.xml` | 타겟유형 마스터 |
-| `schema/LGU_TARGET_TYPE_FATIGUE_M.xml` | 피로도 cap · Rule sync |
-| `schema/delivery_uplus.xml` | `uplus:delivery` — content/* (MMS 레거시) |
-| `schema/delivery_lgu.xml` | `lgu:delivery` — lguMMS, `@LGU_TARGET_TYPE_M_NO` |
-| `typologyUpgrade/` | sync JS · fatigue form/navtree |
-| `form/deliveryCustomMMS.xml` | MMS Delivery — 타겟유형 입력 |
-| `form/delivery_inputForm.xml` | (선택 lib — nms ref 미사용) |
+| 패키지 | 주요 파일 | Console |
+|--------|-----------|---------|
+| `shared/` | `schema/delivery_*.xml`, `js/custom_lms_mms.js` | delivery · mapping · connector |
+| `typologyUpgrade/` | fatigue schema · form · sync JS | 피로도 CRUD · Rule sync |
+| `typologySetup/` | `form/deliveryCustomMMS.xml`, `js/lguTypologyPressureAdapter.js` | MMS form · Pressure Adapter |
+| `typologySetup/form/delivery_inputForm.xml` | (선택 lib — nms ref 미사용) | — |
 
 ---
 
